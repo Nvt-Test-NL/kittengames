@@ -97,6 +97,7 @@ export default function CloakManager() {
     localStorage.setItem("cloakedTabIcon", settings.tabIcon)
     localStorage.setItem("cloakOverlayEnabled", settings.enabled.toString())
   if (settings.overlayName) localStorage.setItem("cloakOverlayName", settings.overlayName)
+  if (settings.fillMode) localStorage.setItem("cloakOverlayFillMode", settings.fillMode)
   }
 
   // Load settings from localStorage
@@ -116,6 +117,7 @@ export default function CloakManager() {
     const tabIcon = localStorage.getItem("cloakedTabIcon") || "/favicon.ico"
     const presetName = localStorage.getItem("cloakedPresetName") || ""
     const overlayName = localStorage.getItem("cloakOverlayName") || ""
+  const savedFillMode = (localStorage.getItem("cloakOverlayFillMode") as CloakSettings['fillMode']) || 'contain'
 
     return {
       enabled,
@@ -129,7 +131,7 @@ export default function CloakManager() {
       overlayHtml: "<div style=\"text-align:center\"><h1>📘 Study Notes</h1><p>Welcome back!</p></div>",
       overlayImage: "",
       overlayName,
-  fillMode: 'contain',
+  fillMode: savedFillMode,
     }
   }
 

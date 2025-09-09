@@ -185,6 +185,12 @@ export default function TabCustomizationPopup({ isOpen, onClose }: TabCustomizat
     const newTabName = selectedPreset.name === "Custom" ? tabName : selectedPreset.tabName
     const newTabIcon = selectedPreset.name === "Custom" ? tabIcon : selectedPreset.tabIcon
 
+    // Persist overlay selection defaults
+    try {
+      if (selectedOverlay?.name) localStorage.setItem('cloakOverlayName', selectedOverlay.name)
+      if (fillMode) localStorage.setItem('cloakOverlayFillMode', fillMode)
+    } catch {}
+
     // Trigger a custom event to notify the CloakManager
     window.dispatchEvent(new CustomEvent('cloakSettingsChanged', {
       detail: {

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import DOMPurify from "dompurify"
 
 interface CloakOverlayProps {
   isEnabled: boolean
@@ -18,6 +19,7 @@ interface CloakOverlayProps {
 
 export default function CloakOverlay({ isEnabled, overlayContent }: CloakOverlayProps) {
   const [showOverlay, setShowOverlay] = useState(false)
+  const [visibilityChannel, setVisibilityChannel] = useState<BroadcastChannel | null>(null)
 
   const handleMouseOut = useCallback((e: MouseEvent) => {
     // Show overlay when cursor leaves window (like the provided HTML example)
@@ -36,9 +38,17 @@ export default function CloakOverlay({ isEnabled, overlayContent }: CloakOverlay
           newFavicon.href = overlayContent.favicon
           document.head.appendChild(newFavicon)
         }
+
+        // Broadcast visibility change
+        try {
+          localStorage.setItem('cloakOverlayVisible', 'true')
+        } catch {}
+        if (visibilityChannel) {
+          visibilityChannel.postMessage({ type: 'OVERLAY_VISIBILITY', visible: true })
+        }
       }
     }
-  }, [isEnabled, overlayContent])
+  }, [isEnabled, overlayContent, visibilityChannel])
 
   const handleClick = useCallback(() => {
     // Hide overlay on click
@@ -54,8 +64,16 @@ export default function CloakOverlay({ isEnabled, overlayContent }: CloakOverlay
       if (favicon) {
         favicon.href = originalFavicon
       }
+
+      // Broadcast visibility change
+      try {
+        localStorage.setItem('cloakOverlayVisible', 'false')
+      } catch {}
+      if (visibilityChannel) {
+        visibilityChannel.postMessage({ type: 'OVERLAY_VISIBILITY', visible: false })
+      }
     }
-  }, [showOverlay])
+  }, [showOverlay, visibilityChannel])
 
   useEffect(() => {
     // Store original title and favicon once
@@ -75,6 +93,81 @@ export default function CloakOverlay({ isEnabled, overlayContent }: CloakOverlay
       document.removeEventListener("click", handleClick)
     }
   }, [isEnabled, handleMouseOut, handleClick])
+
+  // Setup BroadcastChannel and storage sync for overlay visibility
+  useEffect(() => {
+    let channel: BroadcastChannel | null = null
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      channel = new BroadcastChannel('cloak-overlay-visibility')
+      setVisibilityChannel(channel)
+      channel.onmessage = (event: MessageEvent<{ type: string; visible: boolean }>) => {
+        if (event.data?.type === 'OVERLAY_VISIBILITY') {
+          if (event.data.visible) {
+            if (isEnabled) {
+              setShowOverlay(true)
+              // Apply tab cloaking to this tab too
+              document.title = overlayContent.title
+              const favicon = document.querySelector('link[rel="icon"]') as HTMLLinkElement | null
+              if (favicon) {
+                favicon.href = overlayContent.favicon
+              } else {
+                const newFavicon = document.createElement("link")
+                newFavicon.rel = "icon"
+                newFavicon.href = overlayContent.favicon
+                document.head.appendChild(newFavicon)
+              }
+            }
+          } else {
+            setShowOverlay(false)
+            // Restore original for this tab
+            const originalTitle = localStorage.getItem("originalTabTitle") || document.title
+            const originalFavicon = localStorage.getItem("originalTabFavicon") || "/favicon.ico"
+            document.title = originalTitle
+            const favicon = document.querySelector('link[rel="icon"]') as HTMLLinkElement | null
+            if (favicon) {
+              favicon.href = originalFavicon
+            }
+          }
+        }
+      }
+    }
+
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'cloakOverlayVisible' && e.newValue != null) {
+        const visible = e.newValue === 'true'
+        if (visible) {
+          if (isEnabled) {
+            setShowOverlay(true)
+            document.title = overlayContent.title
+            const favicon = document.querySelector('link[rel="icon"]') as HTMLLinkElement | null
+            if (favicon) {
+              favicon.href = overlayContent.favicon
+            } else {
+              const newFavicon = document.createElement("link")
+              newFavicon.rel = "icon"
+              newFavicon.href = overlayContent.favicon
+              document.head.appendChild(newFavicon)
+            }
+          }
+        } else {
+          setShowOverlay(false)
+          const originalTitle = localStorage.getItem("originalTabTitle") || document.title
+          const originalFavicon = localStorage.getItem("originalTabFavicon") || "/favicon.ico"
+          document.title = originalTitle
+          const favicon = document.querySelector('link[rel="icon"]') as HTMLLinkElement | null
+          if (favicon) {
+            favicon.href = originalFavicon
+          }
+        }
+      }
+    }
+
+    window.addEventListener('storage', handleStorage)
+    return () => {
+      window.removeEventListener('storage', handleStorage)
+      if (channel) channel.close()
+    }
+  }, [isEnabled, overlayContent])
 
   if (!showOverlay) return null
 
@@ -102,7 +195,7 @@ export default function CloakOverlay({ isEnabled, overlayContent }: CloakOverlay
       ) : (
         <div
           className="w-full h-full overflow-auto p-6"
-          dangerouslySetInnerHTML={{ __html: overlayContent.html || '' }}
+          dangerouslySetInnerHTML={{ __html: overlayContent.html ? DOMPurify.sanitize(overlayContent.html) : '' }}
         />
       )}
     </div>
