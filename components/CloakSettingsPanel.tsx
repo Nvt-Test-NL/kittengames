@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { ChevronDown, Check, Eye, EyeOff } from "lucide-react"
-import Image from "next/legacy/image"
+import Image from "next/image"
 
 interface CloakPreset {
   name: string

@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import Header from "../../components/Header";
-import MovieCard from "../../components/MovieCard";
+import dynamic from "next/dynamic";
+const MovieCard = dynamic(() => import("../../components/MovieCard"), { ssr: false });
 import { Movie, TVShow, TMDBResponse } from "../../types/tmdb";
 import {
   getPopularMovies,
@@ -89,15 +90,14 @@ export default function Movies() {
       {/* Featured Banner */}
       {featuredItem && (
         <section className="relative h-[70vh] overflow-hidden">
-          <div
-            className="absolute inset-0 bg-cover bg-center"
-            style={{
-              backgroundImage: `url(${getBackdropUrl(
-                featuredItem.backdrop_path,
-                "original"
-              )})`,
-            }}
-          >
+          <div className="absolute inset-0 bg-cover bg-center">
+            <img
+              src={getBackdropUrl(featuredItem.backdrop_path, "w1280") || ''}
+              alt="Backdrop"
+              className="w-full h-full object-cover"
+              loading="lazy"
+              decoding="async"
+            />
             <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
             <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-transparent to-transparent" />
           </div>

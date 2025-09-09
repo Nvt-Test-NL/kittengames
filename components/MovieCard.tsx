@@ -3,7 +3,7 @@ import Image from 'next/image';
 import { Star, Calendar, Play, Film, Tv } from 'lucide-react';
 import { Movie, TVShow } from '../types/tmdb';
 import { getPosterUrl } from '../utils/tmdb';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 interface MovieCardProps {
   item: Movie | TVShow;
@@ -15,7 +15,6 @@ const isMovie = (item: Movie | TVShow): item is Movie => {
 };
 
 export default function MovieCard({ item, onClick }: MovieCardProps) {
-  const router = useRouter();
   const title = isMovie(item) ? item.title : item.name;
   const releaseDate = isMovie(item) ? item.release_date : item.first_air_date;
   const posterUrl = getPosterUrl(item.poster_path, 'w500');
@@ -30,20 +29,11 @@ export default function MovieCard({ item, onClick }: MovieCardProps) {
     return rating.toFixed(1);
   };
 
-  const handleCardClick = () => {
-    if (onClick) {
-      onClick();
-    }
-    
-    // Navigate to detail page
-    router.push(`/movies/${itemType}/${item.id}`);
-  };
+  const href = `/movies/${itemType}/${item.id}`;
 
   return (
-    <div 
-      className="group relative bg-gray-900/70 backdrop-blur-sm border border-gray-700/50 rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 ease-out cursor-pointer hover:scale-[1.02] hover:border-gray-600/60"
-      onClick={handleCardClick}
-    >
+    <Link href={href} prefetch={false} className="group block">
+      <div className="relative bg-gray-900/70 backdrop-blur-sm border border-gray-700/50 rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 ease-out cursor-pointer hover:scale-[1.02] hover:border-gray-600/60">
       {/* Type Badge */}
       <div className="absolute top-3 left-3 z-20">
         <div className={`flex items-center space-x-1 px-2.5 py-1 rounded-full text-xs font-medium backdrop-blur-md border transition-all duration-300 ${
@@ -110,7 +100,7 @@ export default function MovieCard({ item, onClick }: MovieCardProps) {
         <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000 ease-out" />
       </div>
 
-      <div className="p-4 space-y-2">
+  <div className="p-4 space-y-2">
         <h3 className="text-white font-semibold text-sm line-clamp-2 min-h-[2.5rem] group-hover:text-gray-100 transition-colors duration-300">
           {title}
         </h3>
@@ -129,6 +119,7 @@ export default function MovieCard({ item, onClick }: MovieCardProps) {
           itemType === 'movie' ? 'bg-blue-500/10' : 'bg-purple-500/10'
         }`} />
       </div>
-    </div>
+      </div>
+    </Link>
   );
 }

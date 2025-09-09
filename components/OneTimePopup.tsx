@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { X, ExternalLink } from "lucide-react"
-import Image from "next/legacy/image"
+import Image from "next/image"
 import Link from "next/link"
 
 interface PopupData {
