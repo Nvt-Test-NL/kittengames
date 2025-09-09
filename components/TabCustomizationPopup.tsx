@@ -16,6 +16,16 @@ interface CloakPreset {
   tabIcon: string
 }
 
+interface OverlayPreset {
+  name: string
+  type: 'html' | 'image'
+  backgroundColor?: string
+  textColor?: string
+  html?: string
+  image?: string
+  fillMode?: 'contain' | 'cover' | 'fill' | 'scale-down' | 'none'
+}
+
 export default function TabCustomizationPopup({ isOpen, onClose }: TabCustomizationPopupProps) {
   const [presets, setPresets] = useState<CloakPreset[]>([
     {
@@ -30,15 +40,18 @@ export default function TabCustomizationPopup({ isOpen, onClose }: TabCustomizat
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [overlayEnabled, setOverlayEnabled] = useState(false)
+  const [overlays, setOverlays] = useState<OverlayPreset[]>([])
+  const [overlayLoading, setOverlayLoading] = useState(false)
+  const [selectedOverlay, setSelectedOverlay] = useState<OverlayPreset | null>(null)
+  const [isOverlayDropdownOpen, setIsOverlayDropdownOpen] = useState(false)
+  const [fillMode, setFillMode] = useState<'contain' | 'cover' | 'fill' | 'scale-down' | 'none'>('contain')
 
-  // Load presets from GitHub JSON
+  // Load presets from local /public JSON
   useEffect(() => {
     const fetchPresets = async () => {
       try {
         setIsLoading(true)
-        const response = await fetch(
-          "https://raw.githubusercontent.com/CodingKitten-YT/KittenGames-gamelibrary/refs/heads/main/presets.json"
-        )
+        const response = await fetch("/presets.json")
         if (!response.ok) {
           throw new Error("Failed to fetch presets")
         }
@@ -74,6 +87,41 @@ export default function TabCustomizationPopup({ isOpen, onClose }: TabCustomizat
       fetchPresets()
     }
   }, [isOpen]) // Dependency array changed to [isOpen]
+
+  // Load overlays when popup opens and overlay is enabled
+  useEffect(() => {
+    const loadOverlays = async () => {
+      try {
+        setOverlayLoading(true)
+        const res = await fetch('/overlays.json')
+        if (!res.ok) throw new Error('Failed to fetch overlays')
+        const data: OverlayPreset[] = await res.json()
+  setOverlays(data)
+        const savedOverlayName = localStorage.getItem('cloakOverlayName') || ''
+        const found = data.find(o => o.name === savedOverlayName)
+  const ov = found || data[0] || null
+  setSelectedOverlay(ov)
+  setFillMode(ov?.fillMode || 'contain')
+      } catch (e) {
+        const fallback: OverlayPreset = {
+          name: 'Study Notes (HTML)',
+          type: 'html',
+          backgroundColor: '#ffffff',
+          textColor: '#333333',
+          html: '<div style="text-align:center"><h1>📘 Study Notes</h1><p>Welcome back!</p></div>'
+        }
+  setOverlays([fallback])
+  setSelectedOverlay(fallback)
+  setFillMode(fallback.fillMode || 'contain')
+      } finally {
+        setOverlayLoading(false)
+      }
+    }
+
+    if (isOpen && overlayEnabled && overlays.length === 0 && !overlayLoading) {
+      loadOverlays()
+    }
+  }, [isOpen, overlayEnabled, overlays.length, overlayLoading])
 
   useEffect(() => {
     if (isOpen && !isLoading && presets.length > 0) { // Ensure presets are loaded
@@ -143,10 +191,17 @@ export default function TabCustomizationPopup({ isOpen, onClose }: TabCustomizat
         enabled: overlayEnabled,
         tabName: newTabName,
         tabIcon: newTabIcon,
-        pageContent: "📘 Study Notes",
-        backgroundColor: "#ffffff",
-        textColor: "#333333",
-        presetName: selectedPreset.name
+  // Backward compatible fields derived from overlay
+  pageContent: selectedOverlay?.type === 'html' ? (selectedOverlay?.html || '') : '',
+  backgroundColor: selectedOverlay?.backgroundColor || '#ffffff',
+  textColor: selectedOverlay?.textColor || '#333333',
+  presetName: selectedPreset.name,
+  // New overlay fields
+  overlayType: selectedOverlay?.type || 'html',
+  overlayHtml: selectedOverlay?.type === 'html' ? (selectedOverlay?.html || '') : undefined,
+  overlayImage: selectedOverlay?.type === 'image' ? (selectedOverlay?.image || '') : undefined,
+  overlayName: selectedOverlay?.name,
+  fillMode,
       }
     }))
     onClose()
@@ -175,6 +230,7 @@ export default function TabCustomizationPopup({ isOpen, onClose }: TabCustomizat
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Preset selector */}
             <div>
               <label htmlFor="preset" className="block text-xs font-medium text-gray-400 mb-1.5">
                 Preset
@@ -186,7 +242,7 @@ export default function TabCustomizationPopup({ isOpen, onClose }: TabCustomizat
                   className="w-full px-3.5 py-2.5 bg-gray-800 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 border border-gray-700 transition-colors flex justify-between items-center hover:bg-gray-700/70"
                 >
                   <div className="flex items-center space-x-2.5">
-                    {selectedPreset?.tabIcon && selectedPreset.name !== "Custom" ? (
+                    {selectedPreset && selectedPreset.tabIcon && selectedPreset.name !== "Custom" ? (
                       <div className="flex-shrink-0 w-4 h-4 relative">
                         <Image
                           src={selectedPreset.tabIcon}
@@ -243,8 +299,8 @@ export default function TabCustomizationPopup({ isOpen, onClose }: TabCustomizat
                 )}
               </div>
             </div>
-            
-            {/* Tab Overlay Toggle */}
+
+            {/* Tab Overlay Toggle and overlay selector */}
             <div>
               <label className="block text-xs font-medium text-gray-400 mb-1.5">
                 Tab Overlay
@@ -269,7 +325,61 @@ export default function TabCustomizationPopup({ isOpen, onClose }: TabCustomizat
                   : "Use regular tab cloaking"
                 }
               </p>
+              {overlayEnabled && (
+                <div className="mt-3">
+                  <label className="block text-xs font-medium text-gray-400 mb-1.5">Overlay</label>
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setIsOverlayDropdownOpen(!isOverlayDropdownOpen)}
+                      className="w-full px-3.5 py-2.5 bg-gray-800 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 border border-gray-700 transition-colors flex justify-between items-center hover:bg-gray-700/70"
+                      disabled={overlayLoading}
+                    >
+                      <span className="text-sm">{overlayLoading ? 'Loading overlays…' : (selectedOverlay?.name || 'Select overlay')}</span>
+                      <ChevronDown className={`w-4 h-4 transition-transform duration-200 text-gray-400 ${isOverlayDropdownOpen ? 'rotate-180' : ''}`} />
+                    </button>
+                    {isOverlayDropdownOpen && !overlayLoading && (
+                      <div className="absolute z-10 w-full mt-1 bg-gray-800 rounded-lg shadow-lg max-h-56 overflow-y-auto border border-gray-700 animate-in fade-in slide-in-from-top-1 duration-100">
+                        {overlays.map((ov) => (
+                          <button
+                            key={ov.name}
+                            type="button"
+                            onClick={() => { setSelectedOverlay(ov); setFillMode(ov.fillMode || 'contain'); setIsOverlayDropdownOpen(false) }}
+                            className="w-full px-3.5 py-2.5 text-left text-gray-200 hover:bg-gray-700/70 transition-colors flex items-center justify-between text-sm"
+                          >
+                            <div className="flex items-center space-x-2.5">
+                              <span>{ov.name}</span>
+                              <span className="text-xs text-gray-400">{ov.type}{ov.type === 'image' && ov.fillMode ? ` • ${ov.fillMode}` : ''}</span>
+                            </div>
+                            {selectedOverlay?.name === ov.name && (
+                              <Check className="w-3.5 h-3.5 text-purple-500" />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  {selectedOverlay?.type === 'image' && (
+                    <div className="mt-3">
+                      <label className="block text-xs font-medium text-gray-400 mb-1.5">Fill mode</label>
+                      <select
+                        value={fillMode}
+                        onChange={(e) => setFillMode(e.target.value as any)}
+                        className="w-full px-3.5 py-2.5 bg-gray-800 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 border border-gray-700 transition-colors"
+                      >
+                        <option value="contain">contain</option>
+                        <option value="cover">cover</option>
+                        <option value="fill">fill</option>
+                        <option value="scale-down">scale-down</option>
+                        <option value="none">none</option>
+                      </select>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
+
+            {/* Custom fields for Custom preset */}
             {selectedPreset?.name === "Custom" && (
               <>
                 <div>
@@ -300,6 +410,8 @@ export default function TabCustomizationPopup({ isOpen, onClose }: TabCustomizat
                 </div>
               </>
             )}
+
+            {/* Preview */}
             <div>
               <label className="block text-xs font-medium text-gray-400 mb-1.5">Preview</label>
               <div className="bg-gray-800/70 rounded-lg border border-gray-700">
@@ -312,15 +424,6 @@ export default function TabCustomizationPopup({ isOpen, onClose }: TabCustomizat
                         layout="fill"
                         objectFit="contain"
                         className="rounded-sm"
-                        onError={(e) => {
-                          // Fallback for broken image links in preview
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none'; // Hide broken image
-                          // Optionally, show a placeholder
-                          const placeholder = document.createElement('div');
-                          placeholder.className = 'w-3.5 h-3.5 bg-gray-600 rounded-sm';
-                          target.parentNode?.appendChild(placeholder);
-                        }}
                       />
                     </div>
                   ) : (
@@ -337,6 +440,7 @@ export default function TabCustomizationPopup({ isOpen, onClose }: TabCustomizat
                 </div>
               </div>
             </div>
+
             <button
               type="submit"
               className="w-full bg-purple-600 text-white py-2.5 px-4 rounded-lg hover:bg-purple-700 transition-colors font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-900 text-sm"

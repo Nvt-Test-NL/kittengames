@@ -1,0 +1,21 @@
+[
+  {
+    "name": "Study Notes (HTML)",
+    "type": "html",
+    "backgroundColor": "#ffffff",
+    "textColor": "#333333",
+    "html": "<div style=\"text-align:center\"><h1>📘 Study Notes</h1><p>Chapter 4: Data Structures — Arrays, Linked Lists, Stacks, Queues</p></div>"
+  },
+  {
+    "name": "Google (Image)",
+    "type": "image",
+    "backgroundColor": "#181c20",
+    "image": "/images/google.png"
+  },
+  {
+    "name": "Docs Page (Image)",
+    "type": "image",
+    "backgroundColor": "#181c20",
+    "image": "https://images.ctfassets.net/vztl6s0hp3ro/7iV77OWi6F3v4q5cIYzmHk/0bc8927a9f743d56c7d1ee2e9f80c408/Google_Docs-01.png?w=1080&q=90&fm=webp"
+  }
+]

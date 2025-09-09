@@ -7,10 +7,17 @@ interface CloakSettings {
   enabled: boolean
   tabName: string
   tabIcon: string
+  // Deprecated fields kept for backward compatibility
   pageContent: string
   backgroundColor: string
   textColor: string
   presetName: string
+  // New overlay fields
+  overlayType?: 'html' | 'image'
+  overlayHtml?: string
+  overlayImage?: string
+  overlayName?: string
+  fillMode?: 'contain' | 'cover' | 'fill' | 'scale-down' | 'none'
 }
 
 interface CloakMessage {
@@ -26,7 +33,12 @@ export default function CloakManager() {
     pageContent: "📘 Study Notes",
     backgroundColor: "#ffffff",
     textColor: "#333333",
-    presetName: "",
+  presetName: "",
+  overlayType: 'html',
+  overlayHtml: "<div style=\"text-align:center\"><h1>📘 Study Notes</h1><p>Welcome back!</p></div>",
+  overlayImage: "",
+  overlayName: "Study Notes (HTML)",
+  fillMode: 'contain',
   })
 
   const [broadcastChannel, setBroadcastChannel] = useState<BroadcastChannel | null>(null)
@@ -84,6 +96,7 @@ export default function CloakManager() {
     localStorage.setItem("cloakedTabName", settings.tabName)
     localStorage.setItem("cloakedTabIcon", settings.tabIcon)
     localStorage.setItem("cloakOverlayEnabled", settings.enabled.toString())
+  if (settings.overlayName) localStorage.setItem("cloakOverlayName", settings.overlayName)
   }
 
   // Load settings from localStorage
@@ -102,6 +115,7 @@ export default function CloakManager() {
     const tabName = localStorage.getItem("cloakedTabName") || "KittenGames"
     const tabIcon = localStorage.getItem("cloakedTabIcon") || "/favicon.ico"
     const presetName = localStorage.getItem("cloakedPresetName") || ""
+    const overlayName = localStorage.getItem("cloakOverlayName") || ""
 
     return {
       enabled,
@@ -111,6 +125,11 @@ export default function CloakManager() {
       backgroundColor: "#ffffff",
       textColor: "#333333",
       presetName,
+      overlayType: 'html',
+      overlayHtml: "<div style=\"text-align:center\"><h1>📘 Study Notes</h1><p>Welcome back!</p></div>",
+      overlayImage: "",
+      overlayName,
+  fillMode: 'contain',
     }
   }
 
@@ -200,10 +219,15 @@ export default function CloakManager() {
         enabled: event.detail.enabled,
         tabName: event.detail.tabName,
         tabIcon: event.detail.tabIcon,
-        pageContent: event.detail.pageContent,
-        backgroundColor: event.detail.backgroundColor,
-        textColor: event.detail.textColor,
-        presetName: event.detail.presetName || ""
+  pageContent: event.detail.pageContent,
+  backgroundColor: event.detail.backgroundColor,
+  textColor: event.detail.textColor,
+  presetName: event.detail.presetName || "",
+  overlayType: event.detail.overlayType || 'html',
+  overlayHtml: event.detail.overlayHtml,
+  overlayImage: event.detail.overlayImage,
+  overlayName: event.detail.overlayName,
+  fillMode: event.detail.fillMode,
       })
     }
 
@@ -233,9 +257,12 @@ export default function CloakManager() {
       overlayContent={{
         title: cloakSettings.tabName,
         favicon: cloakSettings.tabIcon,
-        pageContent: cloakSettings.pageContent,
-        backgroundColor: cloakSettings.backgroundColor,
-        textColor: cloakSettings.textColor,
+  type: cloakSettings.overlayType,
+  html: cloakSettings.overlayHtml || cloakSettings.pageContent,
+  image: cloakSettings.overlayImage,
+  backgroundColor: cloakSettings.backgroundColor,
+  textColor: cloakSettings.textColor,
+  fillMode: cloakSettings.fillMode,
       }}
     />
   )

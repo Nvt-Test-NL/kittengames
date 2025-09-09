@@ -217,6 +217,52 @@ export default function GeneralSettingsPanel() {
     }
   }
 
+  // Individual delete helpers
+  const deleteLocalStorageKey = async (key: string) => {
+    if (typeof window === 'undefined') return
+    if (!window.confirm(`Delete localStorage key "${key}"?`)) return
+    try {
+      localStorage.removeItem(key)
+      await calculateStorageInfo()
+    } catch (e) {
+      console.error('Failed to delete localStorage key:', e)
+      alert('Failed to delete the key. Please try again.')
+    }
+  }
+
+  const deleteIndexedDBDatabase = async (name: string) => {
+    if (typeof window === 'undefined') return
+    if (!window.confirm(`Delete IndexedDB database "${name}"? This cannot be undone.`)) return
+    try {
+      if ('indexedDB' in window) {
+        await new Promise<void>((resolve, reject) => {
+          const req = indexedDB.deleteDatabase(name)
+          req.onsuccess = () => resolve()
+          req.onerror = () => reject(req.error)
+          req.onblocked = () => resolve() // proceed; will clear after reload if blocked
+        })
+        await calculateStorageInfo()
+      }
+    } catch (e) {
+      console.error('Failed to delete IndexedDB database:', e)
+      alert('Failed to delete the database. Please try again.')
+    }
+  }
+
+  const deleteCookie = async (name: string) => {
+    if (typeof window === 'undefined') return
+    if (!window.confirm(`Delete cookie "${name}"?`)) return
+    try {
+      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`
+      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=${window.location.hostname}`
+      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.${window.location.hostname}`
+      await calculateStorageInfo()
+    } catch (e) {
+      console.error('Failed to delete cookie:', e)
+      alert('Failed to delete the cookie. Please try again.')
+    }
+  }
+
   // Don't render until mounted on client
   if (!isMounted) {
     return (
@@ -341,10 +387,17 @@ export default function GeneralSettingsPanel() {
                 {storageInfo.localStorage.keys.length > 0 && (
                   <div>
                     <h5 className="text-sm font-medium text-gray-300 mb-2">Stored Keys:</h5>
-                    <div className="max-h-32 overflow-y-auto">
+                    <div className="max-h-40 overflow-y-auto divide-y divide-gray-700/60 rounded-md border border-gray-700/60">
                       {storageInfo.localStorage.keys.map((key, index) => (
-                        <div key={index} className="text-xs text-gray-400 font-mono py-1 px-2 hover:bg-gray-700 rounded">
-                          {key}
+                        <div key={index} className="flex items-center justify-between gap-2 px-2 py-1.5 bg-gray-800/60">
+                          <span className="text-xs text-gray-300 font-mono truncate" title={key}>{key}</span>
+                          <button
+                            onClick={() => deleteLocalStorageKey(key)}
+                            className="flex items-center gap-1.5 text-xs px-2 py-1 bg-red-600/90 hover:bg-red-700 text-white rounded"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            Delete
+                          </button>
                         </div>
                       ))}
                     </div>
@@ -372,10 +425,17 @@ export default function GeneralSettingsPanel() {
                 {storageInfo.indexedDB.databases.length > 0 && (
                   <div>
                     <h5 className="text-sm font-medium text-gray-300 mb-2">Database Names:</h5>
-                    <div className="max-h-32 overflow-y-auto">
+                    <div className="max-h-40 overflow-y-auto divide-y divide-gray-700/60 rounded-md border border-gray-700/60">
                       {storageInfo.indexedDB.databases.map((dbName, index) => (
-                        <div key={index} className="text-xs text-gray-400 font-mono py-1 px-2 hover:bg-gray-700 rounded">
-                          {dbName}
+                        <div key={index} className="flex items-center justify-between gap-2 px-2 py-1.5 bg-gray-800/60">
+                          <span className="text-xs text-gray-300 font-mono truncate" title={dbName}>{dbName}</span>
+                          <button
+                            onClick={() => deleteIndexedDBDatabase(dbName)}
+                            className="flex items-center gap-1.5 text-xs px-2 py-1 bg-purple-600/90 hover:bg-purple-700 text-white rounded"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            Delete
+                          </button>
                         </div>
                       ))}
                     </div>
@@ -403,10 +463,17 @@ export default function GeneralSettingsPanel() {
                 {storageInfo.cookies.cookies.length > 0 && (
                   <div>
                     <h5 className="text-sm font-medium text-gray-300 mb-2">Cookie Names:</h5>
-                    <div className="max-h-32 overflow-y-auto">
+                    <div className="max-h-40 overflow-y-auto divide-y divide-gray-700/60 rounded-md border border-gray-700/60">
                       {storageInfo.cookies.cookies.map((cookieName, index) => (
-                        <div key={index} className="text-xs text-gray-400 font-mono py-1 px-2 hover:bg-gray-700 rounded">
-                          {cookieName}
+                        <div key={index} className="flex items-center justify-between gap-2 px-2 py-1.5 bg-gray-800/60">
+                          <span className="text-xs text-gray-300 font-mono truncate" title={cookieName}>{cookieName}</span>
+                          <button
+                            onClick={() => deleteCookie(cookieName)}
+                            className="flex items-center gap-1.5 text-xs px-2 py-1 bg-yellow-600/90 hover:bg-yellow-700 text-white rounded"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            Delete
+                          </button>
                         </div>
                       ))}
                     </div>

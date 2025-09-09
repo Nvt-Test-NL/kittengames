@@ -10,6 +10,16 @@ interface CloakPreset {
   tabIcon: string
 }
 
+interface OverlayPreset {
+  name: string
+  type: 'html' | 'image'
+  backgroundColor?: string
+  textColor?: string
+  html?: string
+  image?: string
+  fillMode?: 'contain' | 'cover' | 'fill' | 'scale-down' | 'none'
+}
+
 export default function CloakSettingsPanel() {
   const [presets, setPresets] = useState<CloakPreset[]>([
     {
@@ -24,14 +34,17 @@ export default function CloakSettingsPanel() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [overlayEnabled, setOverlayEnabled] = useState(false)
+  const [overlays, setOverlays] = useState<OverlayPreset[]>([])
+  const [overlayLoading, setOverlayLoading] = useState(false)
+  const [selectedOverlay, setSelectedOverlay] = useState<OverlayPreset | null>(null)
+  const [isOverlayDropdownOpen, setIsOverlayDropdownOpen] = useState(false)
+  const [fillMode, setFillMode] = useState<'contain' | 'cover' | 'fill' | 'scale-down' | 'none'>('contain')
 
   useEffect(() => {
     const fetchPresets = async () => {
       try {
         setIsLoading(true)
-        const response = await fetch(
-          "https://raw.githubusercontent.com/CodingKitten-YT/KittenGames-gamelibrary/refs/heads/main/presets.json"
-        )
+        const response = await fetch("/presets.json")
         if (!response.ok) throw new Error("Failed to fetch presets")
         const data = await response.json()
         const presetsWithCustom = [...data]
@@ -81,6 +94,7 @@ export default function CloakSettingsPanel() {
       const savedTabName = localStorage.getItem("cloakedTabName")
       const savedTabIcon = localStorage.getItem("cloakedTabIcon")
       const savedOverlayEnabled = localStorage.getItem("cloakOverlayEnabled") === "true"
+      const savedOverlayName = localStorage.getItem("cloakOverlayName") || ""
       
       setOverlayEnabled(savedOverlayEnabled)
       
@@ -104,9 +118,52 @@ export default function CloakSettingsPanel() {
           setTabIcon(savedTabIcon)
         }
       }
+
+      // Preselect overlay if overlays are already loaded
+      if (overlays.length > 0) {
+        const foundOverlay = overlays.find(o => o.name === savedOverlayName)
+  const ov = foundOverlay || overlays[0]
+  setSelectedOverlay(ov)
+  setFillMode(ov?.fillMode || 'contain')
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoading, presets])
+  }, [isLoading, presets, overlays])
+
+  // Load overlay presets when overlay gets enabled
+  useEffect(() => {
+    const loadOverlays = async () => {
+      try {
+        setOverlayLoading(true)
+        const res = await fetch('/overlays.json')
+        if (!res.ok) throw new Error('Failed to fetch overlays')
+        const data: OverlayPreset[] = await res.json()
+        setOverlays(data)
+        const savedOverlayName = localStorage.getItem('cloakOverlayName') || ''
+        const found = data.find(o => o.name === savedOverlayName)
+  const ov = found || data[0] || null
+  setSelectedOverlay(ov)
+  setFillMode(ov?.fillMode || 'contain')
+      } catch (e) {
+        const fallback: OverlayPreset = {
+          name: 'Study Notes (HTML)',
+          type: 'html',
+          backgroundColor: '#ffffff',
+          textColor: '#333333',
+          html: '<div style="text-align:center"><h1>📘 Study Notes</h1><p>Welcome back!</p></div>'
+        }
+  setOverlays([fallback])
+  setSelectedOverlay(fallback)
+  setFillMode(fallback.fillMode || 'contain')
+      } finally {
+        setOverlayLoading(false)
+      }
+    }
+
+    if (overlayEnabled && overlays.length === 0 && !overlayLoading) {
+      loadOverlays()
+    }
+  }, [overlayEnabled, overlays.length, overlayLoading])
 
   const handlePresetChange = (preset: CloakPreset) => {
     setSelectedPreset(preset)
@@ -129,10 +186,17 @@ export default function CloakSettingsPanel() {
         enabled: overlayEnabled,
         tabName: newTabName,
         tabIcon: newTabIcon,
-        pageContent: "📘 Study Notes",
-        backgroundColor: "#ffffff",
-        textColor: "#333333",
-        presetName: selectedPreset.name
+        // Backward compatible fields from overlay
+        pageContent: selectedOverlay?.type === 'html' ? (selectedOverlay?.html || '') : '',
+  backgroundColor: selectedOverlay?.backgroundColor || '#ffffff',
+  textColor: selectedOverlay?.textColor || '#333333',
+        presetName: selectedPreset.name,
+        // New overlay fields
+  overlayType: selectedOverlay?.type || 'html',
+        overlayHtml: selectedOverlay?.type === 'html' ? (selectedOverlay?.html || '') : undefined,
+        overlayImage: selectedOverlay?.type === 'image' ? (selectedOverlay?.image || '') : undefined,
+  overlayName: selectedOverlay?.name,
+  fillMode,
       }
     }))
 
@@ -251,6 +315,58 @@ export default function CloakSettingsPanel() {
               : "Use regular tab cloaking"
             }
           </p>
+          {overlayEnabled && (
+            <div className="mt-3">
+              <label className="block text-sm font-medium text-gray-300 mb-2">Overlay</label>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsOverlayDropdownOpen(!isOverlayDropdownOpen)}
+                  className="w-full px-4 py-2 bg-gray-900 text-gray-100 rounded-md border border-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500 flex justify-between items-center hover:bg-gray-800 transition"
+                  disabled={overlayLoading}
+                >
+                  <span>{overlayLoading ? 'Loading overlays…' : (selectedOverlay?.name || 'Select overlay')}</span>
+                  <ChevronDown className={`w-5 h-5 transition-transform duration-300 text-purple-400 ${isOverlayDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {isOverlayDropdownOpen && !overlayLoading && (
+                  <div className="absolute z-10 w-full mt-1 bg-gray-900 rounded-md shadow-lg max-h-60 overflow-y-auto border border-gray-800 animate-in fade-in slide-in-from-top-2 duration-150">
+                    {overlays.map((ov) => (
+                      <button
+                        key={ov.name}
+                        type="button"
+                        onClick={() => { setSelectedOverlay(ov); setFillMode(ov.fillMode || 'contain'); setIsOverlayDropdownOpen(false) }}
+                        className="w-full px-4 py-2 text-left text-gray-100 hover:bg-gray-800 transition flex items-center justify-between"
+                      >
+                        <div className="flex items-center space-x-3">
+                          <span className="text-sm">{ov.name}</span>
+                          <span className="text-xs text-gray-400">{ov.type}{ov.type === 'image' && ov.fillMode ? ` • ${ov.fillMode}` : ''}</span>
+                        </div>
+                        {selectedOverlay?.name === ov.name && (
+                          <Check className="w-4 h-4 text-purple-400" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {selectedOverlay?.type === 'image' && (
+                <div className="mt-3">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Fill mode</label>
+                  <select
+                    value={fillMode}
+                    onChange={(e) => setFillMode(e.target.value as any)}
+                    className="w-full px-4 py-2 bg-gray-900 text-gray-100 rounded-md border border-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500 hover:bg-gray-800 transition"
+                  >
+                    <option value="contain">contain</option>
+                    <option value="cover">cover</option>
+                    <option value="fill">fill</option>
+                    <option value="scale-down">scale-down</option>
+                    <option value="none">none</option>
+                  </select>
+                </div>
+              )}
+            </div>
+          )}
         </div>
         
         {selectedPreset?.name === "Custom" && (

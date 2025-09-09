@@ -35,9 +35,7 @@ export default function OneTimePopup() {
       const fetchPopupData = async () => {
         try {
           setIsLoading(true)
-          const response = await fetch(
-            "https://raw.githubusercontent.com/CodingKitten-YT/KittenGames-gamelibrary/refs/heads/main/popup.json"
-          )
+          const response = await fetch("/popup.json")
           
           if (!response.ok) {
             throw new Error("Failed to fetch popup data")
