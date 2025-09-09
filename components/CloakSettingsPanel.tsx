@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { ChevronDown, Check } from "lucide-react"
+import { ChevronDown, Check, Eye, EyeOff } from "lucide-react"
 import Image from "next/legacy/image"
 
 interface CloakPreset {
@@ -23,6 +23,7 @@ export default function CloakSettingsPanel() {
   const [tabIcon, setTabIcon] = useState("")
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [overlayEnabled, setOverlayEnabled] = useState(false)
 
   useEffect(() => {
     const fetchPresets = async () => {
@@ -35,7 +36,11 @@ export default function CloakSettingsPanel() {
         const data = await response.json()
         const presetsWithCustom = [...data]
         if (!presetsWithCustom.find(preset => preset.name === "Custom")) {
-          presetsWithCustom.push({ name: "Custom", tabName: "", tabIcon: "" })
+          presetsWithCustom.push({ 
+            name: "Custom", 
+            tabName: "", 
+            tabIcon: ""
+          })
         }
         setPresets(presetsWithCustom)
         if (presetsWithCustom.length > 0 && !selectedPreset) {
@@ -50,7 +55,11 @@ export default function CloakSettingsPanel() {
             tabName: "My Drive - Google Drive",
             tabIcon: "https://ssl.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png",
           },
-          { name: "Custom", tabName: "", tabIcon: "" }
+          { 
+            name: "Custom", 
+            tabName: "", 
+            tabIcon: ""
+          }
         ]
         setPresets(fallbackPresets)
         if (!selectedPreset) {
@@ -71,6 +80,10 @@ export default function CloakSettingsPanel() {
       const savedPresetName = localStorage.getItem("cloakedPresetName")
       const savedTabName = localStorage.getItem("cloakedTabName")
       const savedTabIcon = localStorage.getItem("cloakedTabIcon")
+      const savedOverlayEnabled = localStorage.getItem("cloakOverlayEnabled") === "true"
+      
+      setOverlayEnabled(savedOverlayEnabled)
+      
       if (savedPresetName) {
         const foundPreset = presets.find((preset) => preset.name === savedPresetName)
         if (foundPreset) {
@@ -110,19 +123,31 @@ export default function CloakSettingsPanel() {
     const newTabName = selectedPreset.name === "Custom" ? tabName : selectedPreset.tabName
     const newTabIcon = selectedPreset.name === "Custom" ? tabIcon : selectedPreset.tabIcon
 
-    document.title = newTabName
-    const favicon = document.querySelector('link[rel="icon"]') as HTMLLinkElement
-    if (favicon) {
-      favicon.href = newTabIcon
-    } else {
-      const newFavicon = document.createElement("link")
-      newFavicon.rel = "icon"
-      newFavicon.href = newTabIcon
-      document.head.appendChild(newFavicon)
+    // Trigger a custom event to notify the CloakManager
+    window.dispatchEvent(new CustomEvent('cloakSettingsChanged', {
+      detail: {
+        enabled: overlayEnabled,
+        tabName: newTabName,
+        tabIcon: newTabIcon,
+        pageContent: "📘 Study Notes",
+        backgroundColor: "#ffffff",
+        textColor: "#333333",
+        presetName: selectedPreset.name
+      }
+    }))
+
+    // Show feedback to user
+    const button = e.target as HTMLFormElement
+    const submitButton = button.querySelector('button[type="submit"]') as HTMLButtonElement
+    if (submitButton) {
+      const originalText = submitButton.textContent
+      submitButton.textContent = "Applied!"
+      submitButton.disabled = true
+      setTimeout(() => {
+        submitButton.textContent = originalText
+        submitButton.disabled = false
+      }, 2000)
     }
-    localStorage.setItem("cloakedPresetName", selectedPreset.name)
-    localStorage.setItem("cloakedTabName", newTabName)
-    localStorage.setItem("cloakedTabIcon", newTabIcon)
   }
 
   return (
@@ -200,6 +225,34 @@ export default function CloakSettingsPanel() {
             )}
           </div>
         </div>
+        
+        {/* Tab Overlay Toggle */}
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            Tab Overlay
+          </label>
+          <div className="flex items-center space-x-3">
+            <button
+              type="button"
+              onClick={() => setOverlayEnabled(!overlayEnabled)}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-md border transition-colors ${
+                overlayEnabled
+                  ? "bg-purple-600 border-purple-500 text-white"
+                  : "bg-gray-900 border-gray-800 text-gray-300 hover:bg-gray-800"
+              }`}
+            >
+              {overlayEnabled ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+              <span>{overlayEnabled ? "Enabled" : "Disabled"}</span>
+            </button>
+          </div>
+          <p className="text-gray-500 text-xs mt-1">
+            {overlayEnabled 
+              ? "Show overlay when cursor leaves the page" 
+              : "Use regular tab cloaking"
+            }
+          </p>
+        </div>
+        
         {selectedPreset?.name === "Custom" && (
           <>
             <div>

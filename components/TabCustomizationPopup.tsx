@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { X, ChevronDown, Check } from "lucide-react"
+import { X, ChevronDown, Check, Eye, EyeOff } from "lucide-react"
 import Image from "next/legacy/image"
 import type React from "react"
 
@@ -29,6 +29,7 @@ export default function TabCustomizationPopup({ isOpen, onClose }: TabCustomizat
   const [tabIcon, setTabIcon] = useState("")
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [overlayEnabled, setOverlayEnabled] = useState(false)
 
   // Load presets from GitHub JSON
   useEffect(() => {
@@ -79,6 +80,9 @@ export default function TabCustomizationPopup({ isOpen, onClose }: TabCustomizat
       const savedPresetName = localStorage.getItem("cloakedPresetName")
       const savedTabName = localStorage.getItem("cloakedTabName")
       const savedTabIcon = localStorage.getItem("cloakedTabIcon")
+      const savedOverlayEnabled = localStorage.getItem("cloakOverlayEnabled") === "true"
+
+      setOverlayEnabled(savedOverlayEnabled)
 
       let initialPreset = presets[0]; // Default to the first preset
 
@@ -133,19 +137,18 @@ export default function TabCustomizationPopup({ isOpen, onClose }: TabCustomizat
     const newTabName = selectedPreset.name === "Custom" ? tabName : selectedPreset.tabName
     const newTabIcon = selectedPreset.name === "Custom" ? tabIcon : selectedPreset.tabIcon
 
-    document.title = newTabName
-    const favicon = document.querySelector('link[rel="icon"]') as HTMLLinkElement
-    if (favicon) {
-      favicon.href = newTabIcon
-    } else {
-      const newFavicon = document.createElement("link")
-      newFavicon.rel = "icon"
-      newFavicon.href = newTabIcon
-      document.head.appendChild(newFavicon)
-    }
-    localStorage.setItem("cloakedPresetName", selectedPreset.name)
-    localStorage.setItem("cloakedTabName", newTabName)
-    localStorage.setItem("cloakedTabIcon", newTabIcon)
+    // Trigger a custom event to notify the CloakManager
+    window.dispatchEvent(new CustomEvent('cloakSettingsChanged', {
+      detail: {
+        enabled: overlayEnabled,
+        tabName: newTabName,
+        tabIcon: newTabIcon,
+        pageContent: "📘 Study Notes",
+        backgroundColor: "#ffffff",
+        textColor: "#333333",
+        presetName: selectedPreset.name
+      }
+    }))
     onClose()
   }
 
@@ -239,6 +242,33 @@ export default function TabCustomizationPopup({ isOpen, onClose }: TabCustomizat
                   </div>
                 )}
               </div>
+            </div>
+            
+            {/* Tab Overlay Toggle */}
+            <div>
+              <label className="block text-xs font-medium text-gray-400 mb-1.5">
+                Tab Overlay
+              </label>
+              <button
+                type="button"
+                onClick={() => setOverlayEnabled(!overlayEnabled)}
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg border transition-colors ${
+                  overlayEnabled
+                    ? "bg-purple-600 border-purple-500 text-white"
+                    : "bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700/70"
+                }`}
+              >
+                <div className="flex items-center space-x-2">
+                  {overlayEnabled ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                  <span className="text-sm">{overlayEnabled ? "Enabled" : "Disabled"}</span>
+                </div>
+              </button>
+              <p className="text-gray-500 text-xs mt-1">
+                {overlayEnabled 
+                  ? "Show overlay when cursor leaves the page" 
+                  : "Use regular tab cloaking"
+                }
+              </p>
             </div>
             {selectedPreset?.name === "Custom" && (
               <>

@@ -5,6 +5,7 @@ import { GameLaunchSettingsProvider } from "../components/GameLaunchSettingsPane
 import { HotkeysProvider } from "../components/HotkeysSettingsPanel"
 import HotkeysManager from "../components/HotkeysManager"
 import HotkeysHelpOverlay from "../components/HotkeysHelpOverlay"
+import CloakManager from "../components/CloakManager"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -29,6 +30,7 @@ export default function RootLayout({
           <HotkeysProvider>
             <HotkeysManager />
             <HotkeysHelpOverlay />
+            <CloakManager />
             {children}
           </HotkeysProvider>
         </GameLaunchSettingsProvider>
