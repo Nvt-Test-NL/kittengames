@@ -19,6 +19,9 @@ import {
   Film,
   Gamepad,
   Save,
+  Bot,
+  Info,
+  History,
 } from "lucide-react"
 
 import SearchBar from "./SearchBar"
@@ -49,7 +52,10 @@ const navbarConfig: NavbarConfigData = navbarData;
 const navItems: NavItem[] = [
   { id: "games", label: "Games", href: "/", icon: Gamepad },
   { id: "movies", label: "Movies", href: "/movies", icon: Film },
-  { id: "settings", label: "Settings", href: "/settings", icon: Settings }
+  { id: "pjotter-ai", label: "Pjotter-AI", href: "/pjotter-ai", icon: Bot },
+  { id: "settings", label: "Settings", href: "/settings", icon: Settings },
+  { id: "about", label: "About", href: "/about", icon: Info },
+  { id: "updates", label: "Updates", href: "/updates", icon: History },
 ];
 
 interface HeaderProps {
