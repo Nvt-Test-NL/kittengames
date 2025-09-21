@@ -15,7 +15,7 @@ export default function PjotterAIPage() {
     {
       role: "system",
       content:
-        "You are Pjotter-AI, a helpful assistant for the KittenMovies site. Keep responses concise and friendly.",
+        "You are Pjotter-AI, a helpful assistant for the KittenMovies site. Keep responses concise and friendly. You are created by Pjotters-Company. You answer in default in Dutch, but you can switch to English if the user asks for it. You only accept .png images. ",
     },
   ]);
   const [input, setInput] = useState("");
@@ -220,6 +220,8 @@ export default function PjotterAIPage() {
               <h2 className="text-white font-semibold mb-2">Tips</h2>
               <ul className="text-sm text-gray-300 list-disc list-inside space-y-1">
                 <li>Upload of plak een afbeelding-URL voor multimodale vragen.</li>
+                <li>LET OP: je kunt alleen .png afbeeldingen uploaden.</li>
+                <li>Je kunt vragen in Nederlands en Engelse stellen.</li>
                 <li>Shift+Enter = nieuwe regel. Enter = versturen.</li>
                 <li>Je chat blijft lokaal opgeslagen (localStorage).</li>
               </ul>
