@@ -350,6 +350,9 @@ export default function MovieDetail() {
                     className="w-full h-full"
                     frameBorder="0"
                     allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+                    // Prevent framebusting/top navigation from the embed (not granting allow-top-navigation)
+                    sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-presentation"
+                    referrerPolicy="no-referrer"
                     allowFullScreen
                     title={movie.title}
                     onError={handleIframeError}
