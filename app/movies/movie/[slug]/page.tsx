@@ -5,95 +5,147 @@ import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Header from "../../../../components/Header";
 import StreamingErrorHelper from "../../../../components/StreamingErrorHelper";
-import { TVShow } from "../../../../types/tmdb";
+import { Movie } from "../../../../types/tmdb";
 import { getPosterUrl, getBackdropUrl } from "../../../../utils/tmdb";
-import { getStreamingUrl } from "../../../../components/StreamingSettingsPanel";
-import { Loader2, Star, Calendar, LayoutList, ChevronLeft, Play } from "lucide-react";
+import { getStreamingUrl, getStreamingSettings, getNextDomainId, setStreamingSettings } from "../../../../components/StreamingSettingsPanel";
+import { Loader2, Star, Calendar, Clock, ChevronLeft, Play } from "lucide-react";
 import axios from "axios";
 
-interface Season {
-  id: number;
-  name: string;
-  episode_count: number;
-  season_number: number;
+interface MovieDetails extends Movie {
+  runtime?: number;
+  budget?: number;
+  revenue?: number;
+  genres?: Array<{ id: number; name: string }>;
+  production_companies?: Array<{ id: number; name: string }>;
+  production_countries?: Array<{ iso_3166_1: string; name: string }>;
+  spoken_languages?: Array<{ iso_639_1: string; name: string }>;
 }
 
-export default function ShowDetail() {
-  const params = useParams();
-  const slug = params?.slug as string;
+export default function MovieDetail() {
+  const { slug } = useParams() as { slug: string };
   const router = useRouter();
-  const [show, setShow] = useState<TVShow | null>(null);
+  const [movie, setMovie] = useState<MovieDetails | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedSeason, setSelectedSeason] = useState(1);
-  const [selectedEpisode, setSelectedEpisode] = useState(1);
   const [showPlayer, setShowPlayer] = useState(false);
   const [showError, setShowError] = useState(false);
   const [embedUrl, setEmbedUrl] = useState("");
+  const [isSwitching, setIsSwitching] = useState(false);
   const loadTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const backGuardTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    const fetchShowDetails = async () => {
+    const fetchMovieDetails = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`/api/tmdb/tv/${slug}`);
-        setShow(response.data);
+        const response = await axios.get(`/api/tmdb/movie/${slug}`);
+        setMovie(response.data);
       } catch (error) {
-        console.error("Error fetching show details:", error);
+        console.error("Error fetching movie details:", error);
       } finally {
         setLoading(false);
       }
     };
 
     if (slug) {
-      fetchShowDetails();
+      fetchMovieDetails();
     }
   }, [slug]);
 
   useEffect(() => {
     if (slug) {
-      const url = getStreamingUrl('tv', slug, selectedSeason, selectedEpisode);
+      const url = getStreamingUrl('movie', slug);
       setEmbedUrl(url);
     }
-  }, [slug, selectedSeason, selectedEpisode]);
+  }, [slug]);
 
-  const handleBackClick = () => {
-    router.push("/movies");
-  };
+  // Clear any pending load timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (loadTimeoutRef.current) {
+        clearTimeout(loadTimeoutRef.current);
+        loadTimeoutRef.current = null;
+      }
+      if (backGuardTimeoutRef.current) {
+        clearTimeout(backGuardTimeoutRef.current);
+        backGuardTimeoutRef.current = null;
+      }
+      if (typeof window !== 'undefined') {
+        window.onpopstate = null as any;
+      }
+    };
+  }, []);
 
   const installBackGuard = (durationMs = 8000) => {
     if (typeof window === 'undefined') return;
     try {
+      // Push a dummy state and prevent immediate back navigation
       history.pushState(null, '', location.href);
-      const handler = () => { history.go(1); };
+      const handler = () => {
+        history.go(1);
+      };
       window.onpopstate = handler as any;
       if (backGuardTimeoutRef.current) clearTimeout(backGuardTimeoutRef.current);
       backGuardTimeoutRef.current = setTimeout(() => {
-        if (window.onpopstate === handler) window.onpopstate = null as any;
+        if (window.onpopstate === handler) {
+          window.onpopstate = null as any;
+        }
         backGuardTimeoutRef.current = null;
       }, durationMs);
     } catch {}
   };
 
+  const handleBackClick = () => {
+    router.push("/movies");
+  };
+
   const handlePlayClick = () => {
     setShowError(false);
+    // Safari often framebusts or clears history when certain providers try to navigate top.
     const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
     const isSafari = /safari/i.test(ua) && !/chrome|crios|android/i.test(ua);
     if (isSafari) {
+      // Open directly in a new tab for a reliable experience
       try { window.open(embedUrl, '_blank', 'noopener,noreferrer'); } catch {}
       setShowPlayer(false);
+      setShowError(false);
       installBackGuard(6000);
       return;
     }
     setShowPlayer(true);
     installBackGuard(6000);
+    // Start timeout in case the iframe never fires onLoad due to X-Frame-Options/CSP
     if (loadTimeoutRef.current) clearTimeout(loadTimeoutRef.current);
     loadTimeoutRef.current = setTimeout(() => {
       handleIframeError();
-    }, 5000);
+    }, 12000);
   };
 
   const handleIframeError = () => {
+    // Try automatic domain switch if enabled
+    try {
+      const settings = getStreamingSettings();
+      if (settings.autoSwitch) {
+        setIsSwitching(true);
+        setShowPlayer(false);
+        const nextId = getNextDomainId(settings.selectedDomain);
+        const nextSettings = { ...settings, selectedDomain: nextId };
+        setStreamingSettings(nextSettings);
+        const url = getStreamingUrl('movie', slug);
+        setEmbedUrl(url);
+        setShowError(false);
+        // allow iframe to mount after URL update
+        setTimeout(() => setShowPlayer(true), 50);
+        // restart load timeout
+        if (loadTimeoutRef.current) clearTimeout(loadTimeoutRef.current);
+        loadTimeoutRef.current = setTimeout(() => {
+          handleIframeError();
+        }, 5000);
+        setTimeout(() => setIsSwitching(false), 400);
+        return;
+      }
+    } catch (e) {
+      // fall through to show helper
+    }
     setShowError(true);
   };
 
@@ -101,16 +153,31 @@ export default function ShowDetail() {
     setShowError(false);
     setShowPlayer(false);
     setTimeout(() => {
-      const url = getStreamingUrl('tv', slug, selectedSeason, selectedEpisode);
+      const url = getStreamingUrl('movie', slug);
       setEmbedUrl(url);
       setShowPlayer(true);
     }, 100);
   };
 
   const handleDomainSwitch = () => {
-    const url = getStreamingUrl('tv', slug, selectedSeason, selectedEpisode);
+    const url = getStreamingUrl('movie', slug);
     setEmbedUrl(url);
     setShowError(false);
+  };
+
+  const formatRuntime = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours}h ${mins}m`;
+  };
+
+  const formatMoney = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      notation: 'compact',
+      maximumFractionDigits: 1
+    }).format(amount);
   };
 
   if (loading) {
@@ -121,7 +188,7 @@ export default function ShowDetail() {
           <div className="flex items-center justify-center min-h-[60vh]">
             <div className="text-center">
               <Loader2 className="w-8 h-8 animate-spin text-purple-500 mx-auto mb-4" />
-              <p className="text-gray-400">Loading show details...</p>
+              <p className="text-gray-400">Loading movie details...</p>
             </div>
           </div>
         </main>
@@ -129,13 +196,13 @@ export default function ShowDetail() {
     );
   }
 
-  if (!show) {
+  if (!movie) {
     return (
       <div className="min-h-screen bg-gray-950">
         <Header currentPage="movies" />
         <main className="container mx-auto px-4 py-8 pt-24">
           <div className="text-center text-white">
-            <h1 className="text-2xl font-bold mb-4">TV Show not found</h1>
+            <h1 className="text-2xl font-bold mb-4">Movie not found</h1>
             <button
               onClick={() => router.push("/movies")}
               className="px-4 py-2 bg-purple-600 rounded-lg hover:bg-purple-700 transition"
@@ -151,19 +218,16 @@ export default function ShowDetail() {
   return (
     <div className="min-h-screen bg-gray-950 relative">
       {/* Full-screen backdrop image */}
-      {show.backdrop_path && (
+      {movie.backdrop_path && (
         <div className="fixed inset-0 z-0">
           <div
             className="absolute inset-0 bg-center bg-no-repeat bg-cover"
             style={{
-              backgroundImage: `url(${getBackdropUrl(show.backdrop_path, "original")})`,
+              backgroundImage: `url(${getBackdropUrl(movie.backdrop_path, "original")})`,
               backgroundPosition: "center 15%",
             }}
           >
-            {/* Horizontal gradient overlay for readability */}
             <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/30" />
-
-            {/* Bottom gradient for content readability */}
             <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/30 to-transparent" />
           </div>
         </div>
@@ -187,127 +251,113 @@ export default function ShowDetail() {
         {/* Main content section */}
         <section className="container mx-auto px-4 py-8 min-h-[calc(100vh-12rem)]">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            {/* Show Info - Left Column */}
+            {/* Movie Info - Left Column */}
             <div className="lg:col-span-5 text-white">
               <div className="flex flex-col md:flex-row lg:flex-col gap-6 items-start">
                 {/* Poster - Only visible on medium screens */}
                 <div className="w-48 h-72 rounded-xl overflow-hidden shadow-2xl hidden md:block lg:hidden">
                   <Image
-                    src={getPosterUrl(show.poster_path, "w500") || ""}
-                    alt={show.name}
+                    src={getPosterUrl(movie.poster_path, "w500") || ""}
+                    alt={movie.title}
                     width={192}
                     height={288}
                     className="object-cover w-full h-full"
                   />
                 </div>
 
-                {/* Show Info */}
+                {/* Movie Info */}
                 <div className="max-w-xl">
                   <h1 className="text-3xl md:text-4xl font-bold mb-4">
-                    {show?.name}
+                    {movie.title}
                   </h1>
+                  
+                  {/* Metadata Row */}
                   <div className="flex flex-wrap items-center gap-4 mb-4">
                     <div className="flex items-center space-x-1">
                       <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
                       <span className="text-lg font-medium">
-                        {show?.vote_average.toFixed(1)}
+                        {movie.vote_average.toFixed(1)}
+                      </span>
+                      <span className="text-sm text-gray-400">
+                        ({movie.vote_count.toLocaleString()} votes)
                       </span>
                     </div>
                     <div className="flex items-center space-x-1">
                       <Calendar className="w-5 h-5 text-gray-400" />
                       <span className="text-lg">
-                        {show?.first_air_date ? new Date(show.first_air_date).getFullYear() : 'N/A'}
+                        {new Date(movie.release_date).getFullYear()}
                       </span>
                     </div>
-                    <div className="flex items-center space-x-1">
-                      <LayoutList className="w-5 h-5 text-gray-400" />
-                      <span className="text-lg">
-                        {show?.number_of_seasons
-                          ? `${show.number_of_seasons} Season${
-                              show.number_of_seasons > 1 ? "s" : ""
-                            }`
-                          : "N/A"}
-                      </span>
-                    </div>
-                  </div>
-                  <p className="text-base text-gray-300 leading-relaxed mb-6">
-                    {show?.overview}
-                  </p>
-
-                  {/* Season/Episode Selector */}
-                  <div className="mb-6 space-y-4">
-                    <div className="flex gap-4">
-                      <div>
-                        <label className="block text-sm text-gray-400 mb-2">
-                          Season
-                        </label>
-                        <select
-                          value={selectedSeason}
-                          onChange={(e) => {
-                            setSelectedSeason(Number(e.target.value));
-                            setSelectedEpisode(1); // Reset to episode 1 when changing season
-                            setShowPlayer(false); // Close player to show new selection
-                          }}
-                          className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-purple-500"
-                        >
-                          {Array.from({ length: show?.number_of_seasons || 1 }, (_, i) => (
-                            <option key={i + 1} value={i + 1}>
-                              Season {i + 1}
-                            </option>
-                          ))}
-                        </select>
+                    {movie.runtime && (
+                      <div className="flex items-center space-x-1">
+                        <Clock className="w-5 h-5 text-gray-400" />
+                        <span className="text-lg">{formatRuntime(movie.runtime)}</span>
                       </div>
-                      <div>
-                        <label className="block text-sm text-gray-400 mb-2">
-                          Episode
-                        </label>
-                        <select
-                          value={selectedEpisode}
-                          onChange={(e) => {
-                            setSelectedEpisode(Number(e.target.value));
-                            setShowPlayer(false); // Close player to show new selection
-                          }}
-                          className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-purple-500"
-                        >
-                          {/* Default to 20 episodes per season - you could fetch actual episode count from API */}
-                          {Array.from({ length: 20 }, (_, i) => (
-                            <option key={i + 1} value={i + 1}>
-                              Episode {i + 1}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                    
-                    {!showPlayer && (
-                      <button
-                        onClick={handlePlayClick}
-                        className="flex items-center space-x-2 bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-lg font-medium transition-colors"
-                      >
-                        <Play className="w-5 h-5" />
-                        <span>Watch S{selectedSeason} E{selectedEpisode}</span>
-                      </button>
                     )}
                   </div>
 
-                  {/* Quick Details */}
-                  <div className="mt-2 space-y-2 text-sm">
+                  {/* Genres */}
+                  {movie.genres && movie.genres.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {movie.genres.map((genre) => (
+                        <span
+                          key={genre.id}
+                          className="px-3 py-1 bg-gray-800/60 border border-gray-700/50 rounded-full text-sm text-gray-300"
+                        >
+                          {genre.name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Overview */}
+                  <p className="text-base text-gray-300 leading-relaxed mb-6">
+                    {movie.overview}
+                  </p>
+
+                  {/* Play Button */}
+                  {!showPlayer && (
+                    <button
+                      onClick={handlePlayClick}
+                      className="flex items-center space-x-2 bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-lg font-medium transition-colors mb-6 transform hover:scale-105"
+                    >
+                      <Play className="w-5 h-5" />
+                      <span>Watch Movie</span>
+                    </button>
+                  )}
+
+                  {/* Movie Details */}
+                  <div className="space-y-3 text-sm">
                     <div className="flex">
-                      <span className="w-32 text-gray-400">Original Name</span>
-                      <span>{show?.original_name}</span>
+                      <span className="w-32 text-gray-400">Original Title</span>
+                      <span>{movie.original_title}</span>
                     </div>
                     <div className="flex">
-                      <span className="w-32 text-gray-400">First Air Date</span>
-                      <span>{show?.first_air_date}</span>
+                      <span className="w-32 text-gray-400">Release Date</span>
+                      <span>{new Date(movie.release_date).toLocaleDateString()}</span>
                     </div>
                     <div className="flex">
-                      <span className="w-32 text-gray-400">Origin Country</span>
-                      <span>{show?.origin_country?.join(", ") || "N/A"}</span>
+                      <span className="w-32 text-gray-400">Language</span>
+                      <span>{movie.original_language.toUpperCase()}</span>
                     </div>
-                    <div className="flex">
-                      <span className="w-32 text-gray-400">TMDB ID</span>
-                      <span>{slug}</span>
-                    </div>
+                    {movie.budget && movie.budget > 0 && (
+                      <div className="flex">
+                        <span className="w-32 text-gray-400">Budget</span>
+                        <span>{formatMoney(movie.budget)}</span>
+                      </div>
+                    )}
+                    {movie.revenue && movie.revenue > 0 && (
+                      <div className="flex">
+                        <span className="w-32 text-gray-400">Revenue</span>
+                        <span>{formatMoney(movie.revenue)}</span>
+                      </div>
+                    )}
+                    {movie.production_countries && movie.production_countries.length > 0 && (
+                      <div className="flex">
+                        <span className="w-32 text-gray-400">Countries</span>
+                        <span>{movie.production_countries.map(c => c.name).join(", ")}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -317,15 +367,19 @@ export default function ShowDetail() {
             <div className="lg:col-span-7">
               {showPlayer && (
                 <div className="flex items-center justify-between mb-2">
-                  <div className="text-xs text-gray-400">If the player is blocked on this device, open the source directly.</div>
-                  <a
-                    href={embedUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-3 py-1.5 rounded-md bg-gray-800 hover:bg-gray-700 text-sm text-white border border-gray-700"
-                  >
-                    Open in new tab
-                  </a>
+                  <div className="text-xs text-gray-400">
+                    If the player is blocked on this device, try opening the source directly.
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <a
+                      href={embedUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1.5 rounded-md bg-gray-800 hover:bg-gray-700 text-sm text-white border border-gray-700"
+                    >
+                      Open in new tab
+                    </a>
+                  </div>
                 </div>
               )}
               <div className="aspect-video bg-black rounded-xl overflow-hidden shadow-2xl">
@@ -335,84 +389,90 @@ export default function ShowDetail() {
                     className="w-full h-full"
                     frameBorder="0"
                     allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+                    // Prevent framebusting/top navigation from the embed (not granting allow-top-navigation)
                     sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-presentation"
-                    referrerPolicy="no-referrer"
+                    // Some providers require a referrer to validate requests; use a permissive safe policy
+                    referrerPolicy="origin-when-cross-origin"
                     allowFullScreen
-                    title={`${show?.name} - Season ${selectedSeason} Episode ${selectedEpisode}`}
+                    title={movie.title}
                     onError={handleIframeError}
+                    onLoad={() => {
+                      setShowError(false);
+                      setIsSwitching(false);
+                      if (loadTimeoutRef.current) {
+                        clearTimeout(loadTimeoutRef.current);
+                        loadTimeoutRef.current = null;
+                      }
+                    }}
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
-                    <div className="text-center text-white">
-                      <div className="w-20 h-20 mx-auto mb-4 bg-purple-600 rounded-full flex items-center justify-center">
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900 relative">
+                    {/* Background poster with overlay */}
+                    {movie.backdrop_path && (
+                      <div
+                        className="absolute inset-0 bg-cover bg-center opacity-20"
+                        style={{
+                          backgroundImage: `url(${getBackdropUrl(movie.backdrop_path, "w1280")})`,
+                        }}
+                      />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-br from-gray-900/80 to-black/80" />
+                    
+                    {/* Play Button Content */}
+                    <div className="relative z-10 text-center text-white">
+                      {isSwitching && (
+                        <div className="mb-4 inline-flex items-center px-3 py-1.5 rounded-full bg-purple-600/20 text-purple-300 border border-purple-500/30 text-xs">
+                          Switching source...
+                        </div>
+                      )}
+                      <div className="w-20 h-20 mx-auto mb-4 bg-purple-600 rounded-full flex items-center justify-center hover:bg-purple-700 transition-colors cursor-pointer transform hover:scale-110">
                         <Play className="w-8 h-8 ml-1" />
                       </div>
                       <h3 className="text-xl font-semibold mb-2">Ready to Watch</h3>
-                      <p className="text-gray-400 mb-4">
-                        Season {selectedSeason}, Episode {selectedEpisode}
-                      </p>
+                      <p className="text-gray-300 mb-1">{movie.title}</p>
+                      {movie.runtime && (
+                        <p className="text-gray-400 text-sm mb-4">{formatRuntime(movie.runtime)}</p>
+                      )}
                       <button
                         onClick={handlePlayClick}
-                        className="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-lg font-medium transition-colors"
+                        className="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-lg font-medium transition-colors transform hover:scale-105"
                       >
-                        Start Watching
+                        Start Movie
                       </button>
                     </div>
                   </div>
                 )}
               </div>
-              {showPlayer && (
-                <div className="flex justify-between items-center mt-4">
-                  <p className="text-gray-400 text-sm">
-                    Now playing: Season {selectedSeason}, Episode {selectedEpisode}
-                  </p>
+              
+              {/* Error Helper */}
+              {showError && (
+                <StreamingErrorHelper
+                  type="movie"
+                  onRetry={handleRetry}
+                  onDomainSwitch={handleDomainSwitch}
+                />
+              )}
+              
+              {/* Player Controls */}
+              {showPlayer && !showError && (
+                <div className="flex justify-between items-center mt-4 text-gray-400 text-sm">
+                  <div>
+                    <p>Now playing: <span className="text-white">{movie.title}</span></p>
+                    {movie.runtime && (
+                      <p>{formatRuntime(movie.runtime)} • {new Date(movie.release_date).getFullYear()}</p>
+                    )}
+                  </div>
                   <button
                     onClick={() => setShowPlayer(false)}
-                    className="text-gray-400 hover:text-white text-sm transition-colors"
+                    className="text-gray-400 hover:text-white transition-colors px-3 py-1 rounded bg-gray-800/50 hover:bg-gray-700/50"
                   >
-                    Change Episode
+                    Exit Player
                   </button>
                 </div>
               )}
             </div>
           </div>
         </section>
-
-        {/* Error Overlay */}
-        {showError && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80">
-            <div className="max-w-md w-full p-6 bg-gray-800 rounded-lg shadow-lg">
-              <h2 className="text-xl font-semibold text-white mb-4">
-                Streaming Error
-              </h2>
-              <p className="text-gray-400 mb-4">
-                Sorry, we encountered an error while trying to stream this episode.
-              </p>
-              <div className="flex gap-4">
-                <button
-                  onClick={handleRetry}
-                  className="flex-1 px-4 py-2 bg-purple-600 rounded-lg hover:bg-purple-700 transition"
-                >
-                  Retry
-                </button>
-                <button
-                  onClick={handleDomainSwitch}
-                  className="flex-1 px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition"
-                >
-                  Switch Domain
-                </button>
-              </div>
-              <button
-                onClick={() => setShowError(false)}
-                className="absolute top-2 right-2 text-gray-400 hover:text-white"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
