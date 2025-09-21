@@ -106,7 +106,7 @@ export default function MovieDetail() {
     if (loadTimeoutRef.current) clearTimeout(loadTimeoutRef.current);
     loadTimeoutRef.current = setTimeout(() => {
       handleIframeError();
-    }, 12000);
+    }, 20000);
   };
 
   const handleIframeError = () => {
@@ -128,7 +128,7 @@ export default function MovieDetail() {
         if (loadTimeoutRef.current) clearTimeout(loadTimeoutRef.current);
         loadTimeoutRef.current = setTimeout(() => {
           handleIframeError();
-        }, 5000);
+        }, 8000);
         setTimeout(() => setIsSwitching(false), 400);
         return;
       }
@@ -379,7 +379,7 @@ export default function MovieDetail() {
                     frameBorder="0"
                     allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
                     // Prevent framebusting/top navigation from the embed (not granting allow-top-navigation)
-                    sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-presentation"
+                    sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
                     // Some providers require a referrer to validate requests; use a permissive safe policy
                     referrerPolicy="origin-when-cross-origin"
                     allowFullScreen
