@@ -80,7 +80,7 @@ export default function AboutPage() {
         <section className="rounded-2xl border border-gray-800 bg-gray-900/60 backdrop-blur-md p-6">
           <h3 className="text-lg font-semibold text-white mb-2">Credits</h3>
           <p className="text-gray-300">
-            Gemaakt met liefde door Pjotters‑Company. Feedback of ideeën? Laat het ons weten via de Updates‑pagina of de
+            Gemaakt door CondingKitten en Pjotters-Company. Feedback of ideeën? Laat het ons weten via de Updates‑pagina of de
             Request‑knop in de navigatie.
           </p>
         </section>
