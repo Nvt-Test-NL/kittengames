@@ -11,6 +11,8 @@ import {
   getTrendingAll,
   getBackdropUrl,
 } from "../../utils/tmdb";
+import { getMovieDetails, getTVDetails, getSimilarMovies, getSimilarTV } from "../../utils/tmdb";
+import { getHistory, type WatchProgress } from "../../utils/history";
 import {
   Tabs,
   TabsContent,
@@ -27,6 +29,8 @@ export default function Movies() {
   const [featuredItem, setFeaturedItem] = useState<Movie | TVShow | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("trending");
+  const [continueWatching, setContinueWatching] = useState<(Movie | TVShow)[]>([]);
+  const [aiRecommended, setAiRecommended] = useState<(Movie | TVShow)[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -60,6 +64,61 @@ export default function Movies() {
     fetchData();
   }, []);
 
+  // Load Continue Watching from localStorage and AI recommendations
+  useEffect(() => {
+    const loadPersonalized = async () => {
+      try {
+        const history: WatchProgress[] = getHistory();
+        // Continue Watching: not finished, use most recent first, limit 10
+        const cw = history.filter(h => !h.finished).sort((a,b)=>b.updatedAt - a.updatedAt).slice(0, 10);
+        const cwDetails: (Movie | TVShow)[] = [];
+        for (const h of cw) {
+          try {
+            const item = h.type === 'movie' ? await getMovieDetails(h.tmdbId) : await getTVDetails(h.tmdbId);
+            cwDetails.push(item);
+          } catch {}
+          if (cwDetails.length >= 10) break;
+        }
+        setContinueWatching(cwDetails);
+
+        // AI recommendations via OpenRouter -> returns ids; if empty, fallback to TMDB similar from last item
+        let recItems: (Movie | TVShow)[] = [];
+        try {
+          const res = await fetch('/api/ai/recommend', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ history: history.map(h => ({ tmdbId: h.tmdbId, type: h.type })) })
+          });
+          const data = await res.json();
+          const ids: Array<{ tmdbId: number, type: 'movie'|'tv' }> = Array.isArray(data?.ids) ? data.ids : [];
+          for (const id of ids) {
+            try {
+              const item = id.type === 'movie' ? await getMovieDetails(id.tmdbId) : await getTVDetails(id.tmdbId);
+              recItems.push(item);
+              if (recItems.length >= 6) break;
+            } catch {}
+          }
+        } catch {}
+
+        if (recItems.length === 0) {
+          // Fallback: take last watched and fetch similar
+          const last = history[0];
+          if (last) {
+            try {
+              const similar = last.type === 'movie' ? await getSimilarMovies(last.tmdbId) : await getSimilarTV(last.tmdbId);
+              recItems = (similar.results as any[]).slice(0, 12);
+            } catch {}
+          }
+        }
+        setAiRecommended(recItems.slice(0,6));
+      } catch (e) {
+        // ignore personalization failure
+      }
+    };
+    // Delay slightly to allow client hydration
+    setTimeout(loadPersonalized, 0);
+  }, []);
+
   const isMovie = (item: Movie | TVShow): item is Movie => {
     return "title" in item;
   };
@@ -73,6 +132,31 @@ export default function Movies() {
       <div className="min-h-screen bg-gray-950">
         <Header currentPage="movies" />
         <main className="container mx-auto px-4 py-8 pt-24">
+        {/* Continue Watching */}
+        {continueWatching.length > 0 && (
+          <section className="mb-12">
+            <h2 className="text-2xl font-bold text-white mb-6">Continue Watching</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+              {continueWatching.map((item) => (
+                <MovieCard key={`cw-${('id' in item)? item.id : Math.random()}`} item={item} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* AI Recommends */}
+        {aiRecommended.length > 0 && (
+          <section className="mb-12">
+            <h2 className="text-2xl font-bold text-white mb-6">AI raadt aan</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+              {aiRecommended.map((item, idx) => (
+                <Fragment key={`ai-${idx}-${('id' in item)? item.id : idx}`}>
+                  <MovieCard item={item} />
+                </Fragment>
+              ))}
+            </div>
+          </section>
+        )}
           <div className="flex items-center justify-center min-h-[60vh]">
             <div className="text-center">
               <Loader2 className="w-8 h-8 animate-spin text-purple-500 mx-auto mb-4" />
