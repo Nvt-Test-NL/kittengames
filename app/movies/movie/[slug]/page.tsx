@@ -30,21 +30,13 @@ export default function MovieDetail() {
   const [showError, setShowError] = useState(false);
   const [embedUrl, setEmbedUrl] = useState("");
   const [isSwitching, setIsSwitching] = useState(false);
-  const loadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const loadTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const fetchMovieDetails = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(
-          `https://api.themoviedb.org/3/movie/${slug}`,
-          {
-            headers: {
-              Authorization: `Bearer ${process.env.NEXT_PUBLIC_TMDB_TOKEN}`,
-              accept: "application/json",
-            },
-          }
-        );
+        const response = await axios.get(`/api/tmdb/movie/${slug}`);
         setMovie(response.data);
       } catch (error) {
         console.error("Error fetching movie details:", error);
