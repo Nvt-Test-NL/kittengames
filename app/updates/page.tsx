@@ -89,7 +89,7 @@ export default function UpdatesPage() {
 
   // Only render months that actually have updates, maintain chronological order within the last 24 months
   const activeMonths = useMemo(() => {
-    return timelineMonths.filter((m) => updatesByMonth.has(m.key));
+    return timelineMonths.filter((m: { key: string; label: string; year: number; month: number }) => updatesByMonth.has(m.key));
   }, [timelineMonths, updatesByMonth]);
 
   // Release notes newest -> oldest
@@ -116,8 +116,8 @@ export default function UpdatesPage() {
               <div className="relative min-w-full px-2">
                 {/* center line */}
                 <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 rounded-full" style={{ background: "linear-gradient(90deg, #a855f7 0%, #f97316 25%, #ec4899 50%, #22d3ee 75%, #22c55e 100%)" }} />
-                {/* points */}
-                <div className="relative flex items-stretch gap-16 py-10">
+                {/* points (stretch across full width, edge-to-edge) */}
+                <div className="relative flex items-stretch justify-between py-10">
                   {timelineMonths.map((m: { key: string; label: string; year: number; month: number }, idx: number) => {
                     const key = m.key;
                     const isUp = idx % 2 === 0; // alternate
@@ -132,7 +132,7 @@ export default function UpdatesPage() {
                     const monthUpdates = updatesByMonth.get(key) || [];
                     const title = `${m.label} ${m.year}`;
                     return (
-                      <div key={key} className="relative shrink-0 w-40">
+                      <div key={key} className="relative flex flex-col items-center min-w-[6rem]">
                         {/* connector */}
                         <div className={`absolute left-1/2 -translate-x-1/2 ${isUp ? 'top-0 h-1/2' : 'bottom-0 h-1/2'} w-px bg-gray-700`} />
                         {/* dot on line */}
