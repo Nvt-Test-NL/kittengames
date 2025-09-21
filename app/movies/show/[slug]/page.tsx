@@ -36,15 +36,7 @@ export default function ShowDetail() {
     const fetchShowDetails = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(
-          `https://api.themoviedb.org/3/tv/${slug}`,
-          {
-            headers: {
-              Authorization: `Bearer ${process.env.NEXT_PUBLIC_TMDB_TOKEN}`,
-              accept: "application/json",
-            },
-          }
-        );
+        const response = await axios.get(`/api/tmdb/tv/${slug}`);
         setShow(response.data);
       } catch (error) {
         console.error("Error fetching show details:", error);
@@ -85,20 +77,12 @@ export default function ShowDetail() {
 
   const handlePlayClick = () => {
     setShowError(false);
-    const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
-    const isSafari = /safari/i.test(ua) && !/chrome|crios|android/i.test(ua);
-    if (isSafari) {
-      try { window.open(embedUrl, '_blank', 'noopener,noreferrer'); } catch {}
-      setShowPlayer(false);
-      installBackGuard(6000);
-      return;
-    }
     setShowPlayer(true);
     installBackGuard(6000);
     if (loadTimeoutRef.current) clearTimeout(loadTimeoutRef.current);
     loadTimeoutRef.current = setTimeout(() => {
       handleIframeError();
-    }, 5000);
+    }, 12000);
   };
 
   const handleIframeError = () => {
