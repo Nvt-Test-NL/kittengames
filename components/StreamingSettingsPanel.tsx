@@ -101,7 +101,8 @@ export function getStreamingUrl(type: 'movie' | 'tv', id: string, season?: numbe
   const domain = streamingDomains.find(d => d.id === settings.selectedDomain)?.domain || "vidsrc.xyz"
   
   if (type === 'movie') {
-    return `https://${domain}/embed/movie/${id}?autoplay=1`
+    // Many providers expect the TMDB id via query param rather than a path segment
+    return `https://${domain}/embed/movie?tmdb=${id}&autoplay=1`
   } else {
     return `https://${domain}/embed/tv?tmdb=${id}&season=${season}&episode=${episode}&autoplay=1&autonext=1`
   }
