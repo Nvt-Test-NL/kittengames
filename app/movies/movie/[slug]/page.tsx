@@ -326,6 +326,23 @@ export default function MovieDetail() {
 
             {/* Video Player - Right Column */}
             <div className="lg:col-span-7">
+              {showPlayer && (
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-xs text-gray-400">
+                    If the player is blocked on this device, try opening the source directly.
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <a
+                      href={embedUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1.5 rounded-md bg-gray-800 hover:bg-gray-700 text-sm text-white border border-gray-700"
+                    >
+                      Open in new tab
+                    </a>
+                  </div>
+                </div>
+              )}
               <div className="aspect-video bg-black rounded-xl overflow-hidden shadow-2xl">
                 {showPlayer ? (
                   <iframe
