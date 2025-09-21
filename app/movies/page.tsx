@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Fragment } from "react";
 import Header from "../../components/Header";
 import dynamic from "next/dynamic";
 const MovieCard = dynamic(() => import("../../components/MovieCard"), { ssr: false });
@@ -18,6 +18,7 @@ import {
   TabsTrigger,
 } from "../../components/ui/tabs";
 import { Film, Tv, Flame, Loader2 } from "lucide-react";
+import AdInFeed from "../../components/ads/AdInFeed";
 
 export default function Movies() {
   const [trendingItems, setTrendingItems] = useState<(Movie | TVShow)[]>([]);
@@ -166,8 +167,13 @@ export default function Movies() {
               Trending This Week
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-              {trendingItems.map((item) => (
-                <MovieCard key={item.id} item={item} />
+              {trendingItems.map((item, idx) => (
+                <Fragment key={`trending-${idx}-${item.id}`}>
+                  <MovieCard item={item} />
+                  {((idx + 1) % 6 === 0) && (
+                    <AdInFeed adSlot="5154592782" />
+                  )}
+                </Fragment>
               ))}
             </div>
           </TabsContent>
