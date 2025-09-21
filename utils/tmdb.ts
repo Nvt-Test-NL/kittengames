@@ -1,13 +1,13 @@
 import axios from 'axios';
 import { TMDBResponse } from '../types/tmdb';
 
-const TMDB_URL = 'https://api.themoviedb.org/3';
+// Route images from TMDB directly (allowed via next.config.mjs)
 const TMDB_IMAGE_URL = 'https://image.tmdb.org/t/p';
 
+// Use our server-side proxy to TMDB so browsers only call our own domain
 const tmdbAxios = axios.create({
-  baseURL: TMDB_URL,
+  baseURL: '/api/tmdb',
   headers: {
-    Authorization: `Bearer ${process.env.NEXT_PUBLIC_TMDB_TOKEN}`,
     accept: 'application/json',
   },
 });
@@ -42,37 +42,25 @@ export const getTrendingAll = async (timeWindow: 'day' | 'week' = 'week'): Promi
 };
 
 export const searchMovies = async (query: string): Promise<TMDBResponse> => {
-  const url = `https://api.themoviedb.org/3/search/movie?query=${encodeURIComponent(query)}&page=1`;
-  
-  const response = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${process.env.NEXT_PUBLIC_TMDB_TOKEN}`,
-      accept: 'application/json',
+  const response = await tmdbAxios.get('/search/movie', {
+    params: {
+      query,
+      page: 1,
+      language: 'en-US',
     },
   });
-
-  if (!response.ok) {
-    throw new Error('Failed to search movies');
-  }
-
-  return response.json();
+  return response.data;
 };
 
 export const searchTVShows = async (query: string): Promise<TMDBResponse> => {
-  const url = `https://api.themoviedb.org/3/search/tv?query=${encodeURIComponent(query)}&page=1`;
-  
-  const response = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${process.env.NEXT_PUBLIC_TMDB_TOKEN}`,
-      accept: 'application/json',
+  const response = await tmdbAxios.get('/search/tv', {
+    params: {
+      query,
+      page: 1,
+      language: 'en-US',
     },
   });
-
-  if (!response.ok) {
-    throw new Error('Failed to search TV shows');
-  }
-
-  return response.json();
+  return response.data;
 };
 
 export const getPosterUrl = (path: string | null, size: 'w342' | 'w500' | 'w780' | 'original' = 'w500') => {
