@@ -54,7 +54,7 @@ const navItems: NavItem[] = [
   { id: "movies", label: "Movies", href: "/movies", icon: Film },
   { id: "pjotter-ai", label: "Pjotter-AI", href: "/pjotter-ai", icon: Bot },
   { id: "settings", label: "Settings", href: "/settings", icon: Settings },
-  { id: "about", label: "About", href: "/about", icon: Info },
+  { id: "about", label: "About Us", href: "/about", icon: Info },
   { id: "updates", label: "Updates", href: "/updates", icon: History },
 ];
 
