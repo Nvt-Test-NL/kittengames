@@ -159,7 +159,7 @@ export default function UpdatesPage() {
         <section>
           <h2 className="text-xl font-semibold text-white mb-3">Coming Soon…</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {["Markdown answers in Pjotter‑AI", "Threaded chats (multiple sessions)", "Custom timeline filters", "Mobile offline mode", "Mirror priority editor for TV", "More glass‑morphism polish"].map((t, i) => (
+            {["Markdown answers in Pjotter‑AI", "Threaded chats (multiple sessions)", "Custom timeline filters", "Mobile offline mode", "Mirror priority editor for TV", "AI feedback - Witch Movie Next", "Continue watching", "More glass‑morphism polish"].map((t, i) => (
               <div
                 key={`soon-${i}`}
                 className="p-4 rounded-xl bg-gray-900/60 border border-gray-800 hover:border-purple-500/40 transition-colors"
