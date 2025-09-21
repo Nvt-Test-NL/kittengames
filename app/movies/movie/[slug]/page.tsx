@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Header from "../../../../components/Header";
@@ -30,6 +30,7 @@ export default function MovieDetail() {
   const [showError, setShowError] = useState(false);
   const [embedUrl, setEmbedUrl] = useState("");
   const [isSwitching, setIsSwitching] = useState(false);
+  const loadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const fetchMovieDetails = async () => {
@@ -64,6 +65,16 @@ export default function MovieDetail() {
     }
   }, [slug]);
 
+  // Clear any pending load timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (loadTimeoutRef.current) {
+        clearTimeout(loadTimeoutRef.current);
+        loadTimeoutRef.current = null;
+      }
+    };
+  }, []);
+
   const handleBackClick = () => {
     router.push("/movies");
   };
@@ -71,6 +82,11 @@ export default function MovieDetail() {
   const handlePlayClick = () => {
     setShowError(false);
     setShowPlayer(true);
+    // Start timeout in case the iframe never fires onLoad due to X-Frame-Options/CSP
+    if (loadTimeoutRef.current) clearTimeout(loadTimeoutRef.current);
+    loadTimeoutRef.current = setTimeout(() => {
+      handleIframeError();
+    }, 5000);
   };
 
   const handleIframeError = () => {
@@ -88,6 +104,11 @@ export default function MovieDetail() {
         setShowError(false);
         // allow iframe to mount after URL update
         setTimeout(() => setShowPlayer(true), 50);
+        // restart load timeout
+        if (loadTimeoutRef.current) clearTimeout(loadTimeoutRef.current);
+        loadTimeoutRef.current = setTimeout(() => {
+          handleIframeError();
+        }, 5000);
         setTimeout(() => setIsSwitching(false), 400);
         return;
       }
@@ -319,11 +340,18 @@ export default function MovieDetail() {
                     src={embedUrl}
                     className="w-full h-full"
                     frameBorder="0"
-                    allow="autoplay; fullscreen; picture-in-picture"
+                    allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
                     allowFullScreen
                     title={movie.title}
                     onError={handleIframeError}
-                    onLoad={() => { setShowError(false); setIsSwitching(false); }}
+                    onLoad={() => {
+                      setShowError(false);
+                      setIsSwitching(false);
+                      if (loadTimeoutRef.current) {
+                        clearTimeout(loadTimeoutRef.current);
+                        loadTimeoutRef.current = null;
+                      }
+                    }}
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900 relative">
