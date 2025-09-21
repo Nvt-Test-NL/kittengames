@@ -137,7 +137,7 @@ export default function Movies() {
           <section className="mb-12">
             <h2 className="text-2xl font-bold text-white mb-6">Continue Watching</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-              {continueWatching.map((item) => (
+              {continueWatching.map((item: Movie | TVShow) => (
                 <MovieCard key={`cw-${('id' in item)? item.id : Math.random()}`} item={item} />
               ))}
             </div>
@@ -149,7 +149,7 @@ export default function Movies() {
           <section className="mb-12">
             <h2 className="text-2xl font-bold text-white mb-6">AI raadt aan</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-              {aiRecommended.map((item, idx) => (
+              {aiRecommended.map((item: Movie | TVShow, idx: number) => (
                 <Fragment key={`ai-${idx}-${('id' in item)? item.id : idx}`}>
                   <MovieCard item={item} />
                 </Fragment>
@@ -251,7 +251,7 @@ export default function Movies() {
               Trending This Week
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-              {trendingItems.map((item, idx) => (
+              {trendingItems.map((item: Movie | TVShow, idx: number) => (
                 <Fragment key={`trending-${idx}-${item.id}`}>
                   <MovieCard item={item} />
                   {((idx + 1) % 3 === 0) && (
@@ -267,7 +267,7 @@ export default function Movies() {
               Popular Movies
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-              {popularMovies.map((movie) => (
+              {popularMovies.map((movie: Movie) => (
                 <MovieCard
                   key={movie.id}
                   item={movie}
@@ -282,7 +282,7 @@ export default function Movies() {
               Popular TV Shows
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-              {popularTVShows.map((show) => (
+              {popularTVShows.map((show: TVShow) => (
                 <MovieCard
                   key={show.id}
                   item={show}
