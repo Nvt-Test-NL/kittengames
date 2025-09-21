@@ -7,7 +7,7 @@ import Header from "../../../../components/Header";
 import StreamingErrorHelper from "../../../../components/StreamingErrorHelper";
 import { Movie } from "../../../../types/tmdb";
 import { getPosterUrl, getBackdropUrl } from "../../../../utils/tmdb";
-import { getStreamingUrl } from "../../../../components/StreamingSettingsPanel";
+import { getStreamingUrl, getStreamingSettings, getNextDomainId, setStreamingSettings } from "../../../../components/StreamingSettingsPanel";
 import { Loader2, Star, Calendar, Clock, ChevronLeft, Play } from "lucide-react";
 import axios from "axios";
 
@@ -29,6 +29,7 @@ export default function MovieDetail() {
   const [showPlayer, setShowPlayer] = useState(false);
   const [showError, setShowError] = useState(false);
   const [embedUrl, setEmbedUrl] = useState("");
+  const [isSwitching, setIsSwitching] = useState(false);
 
   useEffect(() => {
     const fetchMovieDetails = async () => {
@@ -68,11 +69,31 @@ export default function MovieDetail() {
   };
 
   const handlePlayClick = () => {
-    setShowPlayer(true);
     setShowError(false);
+    setShowPlayer(true);
   };
 
   const handleIframeError = () => {
+    // Try automatic domain switch if enabled
+    try {
+      const settings = getStreamingSettings();
+      if (settings.autoSwitch) {
+        setIsSwitching(true);
+        setShowPlayer(false);
+        const nextId = getNextDomainId(settings.selectedDomain);
+        const nextSettings = { ...settings, selectedDomain: nextId };
+        setStreamingSettings(nextSettings);
+        const url = getStreamingUrl('movie', slug);
+        setEmbedUrl(url);
+        setShowError(false);
+        // allow iframe to mount after URL update
+        setTimeout(() => setShowPlayer(true), 50);
+        setTimeout(() => setIsSwitching(false), 400);
+        return;
+      }
+    } catch (e) {
+      // fall through to show helper
+    }
     setShowError(true);
   };
 
@@ -302,6 +323,7 @@ export default function MovieDetail() {
                     allowFullScreen
                     title={movie.title}
                     onError={handleIframeError}
+                    onLoad={() => { setShowError(false); setIsSwitching(false); }}
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900 relative">
@@ -318,6 +340,11 @@ export default function MovieDetail() {
                     
                     {/* Play Button Content */}
                     <div className="relative z-10 text-center text-white">
+                      {isSwitching && (
+                        <div className="mb-4 inline-flex items-center px-3 py-1.5 rounded-full bg-purple-600/20 text-purple-300 border border-purple-500/30 text-xs">
+                          Switching source...
+                        </div>
+                      )}
                       <div className="w-20 h-20 mx-auto mb-4 bg-purple-600 rounded-full flex items-center justify-center hover:bg-purple-700 transition-colors cursor-pointer transform hover:scale-110">
                         <Play className="w-8 h-8 ml-1" />
                       </div>
