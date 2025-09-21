@@ -48,7 +48,7 @@ export default function GameGrid({
         }
       } catch (err) {
         console.error("Error loading games:", err)
-        setError("Failed to load games. Please try again later.")
+        setError("KittenGames is down for maintenance. Please try again later. KittenMovies is running fine.")
         setGames([])
       } finally {
         setIsLoading(false)
