@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Header from "../../../../components/Header";
@@ -29,6 +29,8 @@ export default function ShowDetail() {
   const [showPlayer, setShowPlayer] = useState(false);
   const [showError, setShowError] = useState(false);
   const [embedUrl, setEmbedUrl] = useState("");
+  const loadTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const backGuardTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const fetchShowDetails = async () => {
@@ -67,9 +69,36 @@ export default function ShowDetail() {
     router.push("/movies");
   };
 
+  const installBackGuard = (durationMs = 8000) => {
+    if (typeof window === 'undefined') return;
+    try {
+      history.pushState(null, '', location.href);
+      const handler = () => { history.go(1); };
+      window.onpopstate = handler as any;
+      if (backGuardTimeoutRef.current) clearTimeout(backGuardTimeoutRef.current);
+      backGuardTimeoutRef.current = setTimeout(() => {
+        if (window.onpopstate === handler) window.onpopstate = null as any;
+        backGuardTimeoutRef.current = null;
+      }, durationMs);
+    } catch {}
+  };
+
   const handlePlayClick = () => {
-    setShowPlayer(true);
     setShowError(false);
+    const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+    const isSafari = /safari/i.test(ua) && !/chrome|crios|android/i.test(ua);
+    if (isSafari) {
+      try { window.open(embedUrl, '_blank', 'noopener,noreferrer'); } catch {}
+      setShowPlayer(false);
+      installBackGuard(6000);
+      return;
+    }
+    setShowPlayer(true);
+    installBackGuard(6000);
+    if (loadTimeoutRef.current) clearTimeout(loadTimeoutRef.current);
+    loadTimeoutRef.current = setTimeout(() => {
+      handleIframeError();
+    }, 5000);
   };
 
   const handleIframeError = () => {
@@ -294,13 +323,28 @@ export default function ShowDetail() {
 
             {/* Video Player - Right Column */}
             <div className="lg:col-span-7">
+              {showPlayer && (
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-xs text-gray-400">If the player is blocked on this device, open the source directly.</div>
+                  <a
+                    href={embedUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 rounded-md bg-gray-800 hover:bg-gray-700 text-sm text-white border border-gray-700"
+                  >
+                    Open in new tab
+                  </a>
+                </div>
+              )}
               <div className="aspect-video bg-black rounded-xl overflow-hidden shadow-2xl">
                 {showPlayer ? (
                   <iframe
                     src={embedUrl}
                     className="w-full h-full"
                     frameBorder="0"
-                    allow="autoplay; fullscreen; picture-in-picture"
+                    allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+                    sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-presentation"
+                    referrerPolicy="no-referrer"
                     allowFullScreen
                     title={`${show?.name} - Season ${selectedSeason} Episode ${selectedEpisode}`}
                     onError={handleIframeError}
