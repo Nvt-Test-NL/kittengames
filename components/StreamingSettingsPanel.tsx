@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { ChevronDown, Check, AlertTriangle, Globe, Zap, Shield, Clock, LucideIcon } from "lucide-react"
 
-interface StreamingDomain {
+export interface StreamingDomain {
   id: string
   name: string
   domain: string
@@ -11,7 +11,26 @@ interface StreamingDomain {
   icon: LucideIcon
 }
 
-const streamingDomains: StreamingDomain[] = [
+// Persist streaming settings (used by pages/components to programmatically switch domain)
+export function setStreamingSettings(next: StreamingSettings) {
+  if (typeof window !== "undefined") {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+    } catch {
+      // ignore storage errors
+    }
+  }
+}
+
+// Get the next domain id in the list (cyclic)
+export function getNextDomainId(currentId: string): string {
+  const index = streamingDomains.findIndex(d => d.id === currentId)
+  if (index === -1) return streamingDomains[0].id
+  const nextIndex = (index + 1) % streamingDomains.length
+  return streamingDomains[nextIndex].id
+}
+
+export const streamingDomains: StreamingDomain[] = [
   {
     id: "vidsrc-xyz",
     name: "VidSrc XYZ",
