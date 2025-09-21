@@ -10,8 +10,9 @@ type UpdateEntry = {
 export default function UpdatesPage() {
   // Canonical updates list (extend as you release)
   const updates: UpdateEntry[] = [
+    // 2022 — start
+    { date: "2022-01-01", items: ["CodingKittenGames — first page with 5 tiny games shared with friends"] },
     // Early history milestones (approximate months)
-    { date: "2023-03-01", items: ["CodingKittenGames — first page with 5 tiny games shared with friends"] },
     { date: "2023-06-01", items: ["KittenSchool — Google Site with subpages, more games, a few movies"] },
     { date: "2024-02-01", items: ["KittenGames V1 — first real site release"] },
     { date: "2024-06-01", items: ["KittenGames V2 — more games, cleaner design"] },
@@ -28,20 +29,37 @@ export default function UpdatesPage() {
       "Added About and Updates pages",
       "Improved movie/TV players with soft timeouts and source switching",
     ] },
+    // 2026 — planned
+    { date: "2026-01-01", items: [
+      "KittenGames Reborn",
+      "Markdown answers in Pjotter‑AI",
+      "Threaded chats (multiple sessions)",
+      "Custom timeline filters",
+      "Mobile offline mode",
+      "Mirror priority editor for TV",
+      "AI feedback - Witch Movie Next",
+      "Continue watching",
+      "More glass‑morphism polish",
+    ] },
   ];
 
-  // Derive a 24-month timeline window ending current month
+  // Derive unique months directly from updates (ensures 2022..2026 coverage)
   const timelineMonths = useMemo(() => {
-    const months: { key: string; label: string; year: number; month: number }[] = [];
-    const now = new Date();
-    for (let i = 23; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const map = new Map<string, { key: string; label: string; year: number; month: number }>();
+    for (const u of updates) {
+      const d = new Date(u.date);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-      const label = d.toLocaleString(undefined, { month: "short" });
-      months.push({ key, label, year: d.getFullYear(), month: d.getMonth() + 1 });
+      if (!map.has(key)) {
+        map.set(key, {
+          key,
+          label: d.toLocaleString(undefined, { month: "short" }),
+          year: d.getFullYear(),
+          month: d.getMonth() + 1,
+        });
+      }
     }
-    return months;
-  }, []);
+    return Array.from(map.values()).sort((a, b) => a.year === b.year ? a.month - b.month : a.year - b.year);
+  }, [updates]);
 
   // Map updates by YYYY-MM for quick lookup
   const updatesByMonth = useMemo(() => {
@@ -82,20 +100,21 @@ export default function UpdatesPage() {
             {/* Animated gradient sheen */}
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-[pulse_3s_ease-in-out_infinite]" />
 
-            {/* Horizontal line */}
-            <div className="relative">
-              <div className="h-1 bg-gray-800 rounded-full" />
-              {/* Only show months that have updates; evenly spaced and scrollable */}
-              <div className="mt-4 overflow-x-auto">
-                <div className="min-w-full flex items-start gap-8 px-1">
-                  {activeMonths.map((m: { key: string; label: string; year: number; month: number }, idx: number) => {
+            {/* Line with dots centered on it */}
+            <div className="relative mt-2 overflow-x-auto">
+              <div className="relative h-12 min-w-full">
+                {/* line at vertical center */}
+                <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 bg-gray-800 rounded-full" />
+                {/* dots */}
+                <div className="relative h-12 flex items-center gap-10 px-2">
+                  {timelineMonths.map((m: { key: string; label: string; year: number; month: number }, idx: number) => {
                     const key = m.key;
                     return (
                       <div key={key} className="flex flex-col items-center shrink-0 group">
                         <button
                           type="button"
                           onClick={() => setActiveKey(key)}
-                          className="mt-[-14px] w-3.5 h-3.5 rounded-full border bg-purple-500 border-purple-400 hover:scale-110 focus:scale-110 transition-transform shadow-[0_0_0_3px_rgba(168,85,247,0.25)]"
+                          className="z-10 w-3.5 h-3.5 rounded-full border bg-purple-500 border-purple-400 hover:scale-110 focus:scale-110 transition-transform shadow-[0_0_0_3px_rgba(168,85,247,0.25)]"
                           aria-label={`Open ${key} updates`}
                         />
                         <div className="mt-2 text-[10px] text-gray-300 group-hover:text-white transition-colors">
