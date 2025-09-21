@@ -10,14 +10,24 @@ type UpdateEntry = {
 export default function UpdatesPage() {
   // Canonical updates list (extend as you release)
   const updates: UpdateEntry[] = [
-    {
-      date: "2025-09-21",
-      items: [
-        "Added Pjotter-AI (via OpenRouter)",
-        "Added About and Updates pages",
-        "Improved movie/TV players with soft timeouts and source switching",
-      ],
-    },
+    // Early history milestones (approximate months)
+    { date: "2023-03-01", items: ["CodingKittenGames — first page with 5 tiny games shared with friends"] },
+    { date: "2023-06-01", items: ["KittenSchool — Google Site with subpages, more games, a few movies"] },
+    { date: "2024-02-01", items: ["KittenGames V1 — first real site release"] },
+    { date: "2024-06-01", items: ["KittenGames V2 — more games, cleaner design"] },
+    { date: "2024-11-01", items: ["KittenGames V3 — first Next.js build on Vercel"] },
+    // Shutdown and rebirth
+    { date: "2025-08-10", items: [
+      "Shutdown notice — KittenGames goes offline; this page would stay up until 01-01-2026",
+      "Traffic growth led to school blocking; moved to VPS; lost the spark and bigger 'why'",
+    ] },
+    { date: "2025-09-21", items: [
+      "Reborn: KittenGames → KittenMovies-Reborn",
+      "New co-owner/funder: Pjotters-Company",
+      "Added Pjotter-AI (via OpenRouter)",
+      "Added About and Updates pages",
+      "Improved movie/TV players with soft timeouts and source switching",
+    ] },
   ];
 
   // Derive a 24-month timeline window ending current month
@@ -57,6 +67,7 @@ export default function UpdatesPage() {
         {/* Timeline Section */}
         <section className="mb-10">
           <h2 className="text-xl font-semibold text-white mb-3">Timeline (last 24 months)</h2>
+          <div className="text-xs text-gray-500 mb-2">Scroll →</div>
           <div className="relative bg-gray-900/60 border border-gray-800 rounded-xl p-5 overflow-hidden">
             {/* Animated gradient sheen */}
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-[pulse_3s_ease-in-out_infinite]" />
