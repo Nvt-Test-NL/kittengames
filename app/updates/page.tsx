@@ -23,7 +23,7 @@ export default function UpdatesPage() {
     ] },
     { date: "2025-09-21", items: [
       "Reborn: KittenGames → KittenMovies-Reborn",
-      "New co-owner/funder: Pjotters-Company",
+      "New co-owner/funder: Pjotters-Company and Condingkitten",
       "Added Pjotter-AI (via OpenRouter)",
       "Added About and Updates pages",
       "Improved movie/TV players with soft timeouts and source switching",
