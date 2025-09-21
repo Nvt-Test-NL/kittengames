@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { TMDBResponse } from '../types/tmdb';
+import { TMDBResponse, Movie, TVShow } from '../types/tmdb';
 
 // Route images from TMDB directly (allowed via next.config.mjs)
 const TMDB_IMAGE_URL = 'https://image.tmdb.org/t/p';
@@ -70,3 +70,25 @@ export const getPosterUrl = (path: string | null, size: 'w342' | 'w500' | 'w780'
 export const getBackdropUrl = (path: string | null, size: 'w780' | 'w1280' | 'original' = 'w1280') => {
   return path ? `${TMDB_IMAGE_URL}/${size}${path}` : null;
 };
+
+// Details
+export const getMovieDetails = async (id: number | string): Promise<Movie> => {
+  const res = await tmdbAxios.get(`/movie/${id}`, { params: { language: 'en-US' } })
+  return res.data as Movie
+}
+
+export const getTVDetails = async (id: number | string): Promise<TVShow> => {
+  const res = await tmdbAxios.get(`/tv/${id}`, { params: { language: 'en-US' } })
+  return res.data as TVShow
+}
+
+// Similar
+export const getSimilarMovies = async (id: number | string): Promise<TMDBResponse> => {
+  const res = await tmdbAxios.get(`/movie/${id}/similar`, { params: { language: 'en-US', page: 1 } })
+  return res.data as TMDBResponse
+}
+
+export const getSimilarTV = async (id: number | string): Promise<TMDBResponse> => {
+  const res = await tmdbAxios.get(`/tv/${id}/similar`, { params: { language: 'en-US', page: 1 } })
+  return res.data as TMDBResponse
+}
