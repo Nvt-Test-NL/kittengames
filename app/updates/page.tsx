@@ -30,24 +30,35 @@ export default function UpdatesPage() {
       "Improved movie/TV players with soft timeouts and source switching",
     ] },
     // 2026 — planned
-    { date: "2026-01-01", items: [
-      "KittenGames Reborn",
-      "Markdown answers in Pjotter‑AI",
-      "Threaded chats (multiple sessions)",
-      "Custom timeline filters",
-      "Mobile offline mode",
-      "Mirror priority editor for TV",
-      "AI feedback - Witch Movie Next",
-      "Continue watching",
-      "More glass‑morphism polish",
+    { date: "Coming Soon: 2026-01-01 or earlier", items: [
+      "KittenGames Reborn - 2025-10-31",
+      "Markdown answers in Pjotter‑AI - 2025-10-31",
+      "Threaded chats (multiple sessions) - 2026-01-01",
+      "Custom timeline filters - 2026-01-01",
+      "Mobile offline mode - 2026-03-01",
+      "Mirror priority editor for TV - 2026-01-01",
+      "AI feedback - Witch Movie Next - 2025-12-01",
+      "Continue watching - 2025-11-01",
+      "More glass‑morphism polish - 2026-01-01",
     ] },
   ];
+
+  // Helper: safe date parsing (supports labels like "Coming Soon: 2026-01-01 or earlier")
+  const parseDate = (raw: string) => {
+    const d = new Date(raw);
+    if (!isNaN(d.getTime())) return d;
+    const m = raw.match(/(20\d{2})-(\d{2})-(\d{2})/);
+    if (m) return new Date(`${m[1]}-${m[2]}-${m[3]}`);
+    // Fallback to first day of current year if still invalid
+    const now = new Date();
+    return new Date(now.getFullYear(), 0, 1);
+  };
 
   // Derive unique months directly from updates (ensures 2022..2026 coverage)
   const timelineMonths = useMemo(() => {
     const map = new Map<string, { key: string; label: string; year: number; month: number }>();
     for (const u of updates) {
-      const d = new Date(u.date);
+      const d = parseDate(u.date);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
       if (!map.has(key)) {
         map.set(key, {
@@ -65,7 +76,7 @@ export default function UpdatesPage() {
   const updatesByMonth = useMemo(() => {
     const map = new Map<string, UpdateEntry[]>();
     for (const u of updates) {
-      const d = new Date(u.date);
+      const d = parseDate(u.date);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
       const arr = map.get(key) || [];
       arr.push(u);
@@ -94,33 +105,52 @@ export default function UpdatesPage() {
 
         {/* Timeline Section */}
         <section className="mb-10">
-          <h2 className="text-xl font-semibold text-white mb-3">Timeline (last 24 months)</h2>
+          <h2 className="text-xl font-semibold text-white mb-3">Timeline 2022–2026</h2>
           <div className="text-xs text-gray-500 mb-2">Scroll →</div>
           <div className="relative bg-gray-900/60 border border-gray-800 rounded-xl p-5 overflow-hidden">
             {/* Animated gradient sheen */}
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-[pulse_3s_ease-in-out_infinite]" />
 
-            {/* Line with dots centered on it */}
+            {/* Line with alternating up/down capsules */}
             <div className="relative mt-2 overflow-x-auto">
-              <div className="relative h-12 min-w-full">
-                {/* line at vertical center */}
-                <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 bg-gray-800 rounded-full" />
-                {/* dots */}
-                <div className="relative h-12 flex items-center gap-10 px-2">
+              <div className="relative min-w-full px-2">
+                {/* center line */}
+                <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 rounded-full" style={{ background: "linear-gradient(90deg, #a855f7 0%, #f97316 25%, #ec4899 50%, #22d3ee 75%, #22c55e 100%)" }} />
+                {/* points */}
+                <div className="relative flex items-stretch gap-16 py-6">
                   {timelineMonths.map((m: { key: string; label: string; year: number; month: number }, idx: number) => {
                     const key = m.key;
+                    const isUp = idx % 2 === 0; // alternate
+                    const colorClasses = [
+                      "bg-purple-500 border-purple-400",
+                      "bg-orange-500 border-orange-400",
+                      "bg-pink-500 border-pink-400",
+                      "bg-cyan-400 border-cyan-300",
+                      "bg-green-500 border-green-400",
+                    ];
+                    const color = colorClasses[idx % colorClasses.length];
+                    const monthUpdates = updatesByMonth.get(key) || [];
+                    const title = `${m.label} ${m.year}`;
                     return (
-                      <div key={key} className="flex flex-col items-center shrink-0 group">
+                      <div key={key} className="relative shrink-0 w-40">
+                        {/* connector */}
+                        <div className={`absolute left-1/2 -translate-x-1/2 ${isUp ? 'top-0 h-1/2' : 'bottom-0 h-1/2'} w-px bg-gray-700`} />
+                        {/* dot on line */}
                         <button
                           type="button"
                           onClick={() => setActiveKey(key)}
-                          className="z-10 w-3.5 h-3.5 rounded-full border bg-purple-500 border-purple-400 hover:scale-110 focus:scale-110 transition-transform shadow-[0_0_0_3px_rgba(168,85,247,0.25)]"
+                          className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-3.5 h-3.5 rounded-full border shadow-[0_0_0_3px_rgba(255,255,255,0.06)] transition-transform hover:scale-110 focus:scale-110 ${color}`}
                           aria-label={`Open ${key} updates`}
+                          title={`${title} • ${monthUpdates.length} update${monthUpdates.length===1?'':'s'}`}
                         />
-                        <div className="mt-2 text-[10px] text-gray-300 group-hover:text-white transition-colors">
-                          {m.label}
+                        {/* capsule */}
+                        <div className={`absolute left-1/2 -translate-x-1/2 ${isUp ? 'top-0 -translate-y-2' : 'bottom-0 translate-y-2'} w-40`}>
+                          <div className="mx-auto rounded-2xl border border-gray-800 bg-gray-900/70 backdrop-blur p-3 text-center">
+                            <div className="text-xs text-white font-semibold">{m.year}</div>
+                            <div className="text-[10px] text-gray-400">{m.label}</div>
+                            <div className="mt-1 text-[10px] text-gray-500">{monthUpdates.length} update{monthUpdates.length===1?'':'s'}</div>
+                          </div>
                         </div>
-                        <div className="text-[10px] text-gray-500">{m.year}</div>
                       </div>
                     );
                   })}
