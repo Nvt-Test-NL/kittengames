@@ -30,6 +30,8 @@ export default function MovieDetail() {
   const [showError, setShowError] = useState(false);
   const [embedUrl, setEmbedUrl] = useState("");
   const [isSwitching, setIsSwitching] = useState(false);
+  const [timeoutWarning, setTimeoutWarning] = useState(false);
+  const [failAttempts, setFailAttempts] = useState(0);
   const loadTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const backGuardTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -100,42 +102,55 @@ export default function MovieDetail() {
 
   const handlePlayClick = () => {
     setShowError(false);
+    setTimeoutWarning(false);
+    setFailAttempts(0);
     setShowPlayer(true);
     installBackGuard(6000);
     // Start timeout in case the iframe never fires onLoad due to X-Frame-Options/CSP
     if (loadTimeoutRef.current) clearTimeout(loadTimeoutRef.current);
     loadTimeoutRef.current = setTimeout(() => {
-      handleIframeError();
+      handleIframeError('timeout');
     }, 20000);
   };
 
-  const handleIframeError = () => {
+  const handleIframeError = (source: 'timeout' | 'onerror' = 'onerror') => {
     // Try automatic domain switch if enabled
     try {
       const settings = getStreamingSettings();
       if (settings.autoSwitch) {
         setIsSwitching(true);
-        setShowPlayer(false);
+        // Keep player mounted for soft switch on timeout
         const nextId = getNextDomainId(settings.selectedDomain);
         const nextSettings = { ...settings, selectedDomain: nextId };
         setStreamingSettings(nextSettings);
         const url = getStreamingUrl('movie', slug);
         setEmbedUrl(url);
         setShowError(false);
-        // allow iframe to mount after URL update
-        setTimeout(() => setShowPlayer(true), 50);
-        // restart load timeout
+        // restart timeout shorter on subsequent attempts
         if (loadTimeoutRef.current) clearTimeout(loadTimeoutRef.current);
         loadTimeoutRef.current = setTimeout(() => {
-          handleIframeError();
+          handleIframeError('timeout');
         }, 8000);
         setTimeout(() => setIsSwitching(false), 400);
+        if (source === 'timeout' || source === 'onerror') {
+          setTimeoutWarning(true);
+        }
+        // For onerror we still fall through to error UI below
         return;
       }
     } catch (e) {
       // fall through to show helper
     }
-    setShowError(true);
+    // For both timeout and onerror, show soft warning first; escalate after 2 attempts
+    setFailAttempts((n) => {
+      const next = n + 1;
+      if (next >= 2) {
+        setShowError(true);
+      } else {
+        setTimeoutWarning(true);
+      }
+      return next;
+    });
   };
 
   const handleRetry = () => {
@@ -384,10 +399,11 @@ export default function MovieDetail() {
                     referrerPolicy="origin-when-cross-origin"
                     allowFullScreen
                     title={movie.title}
-                    onError={handleIframeError}
+                    onError={() => handleIframeError('onerror')}
                     onLoad={() => {
                       setShowError(false);
                       setIsSwitching(false);
+                      setTimeoutWarning(false);
                       if (loadTimeoutRef.current) {
                         clearTimeout(loadTimeoutRef.current);
                         loadTimeoutRef.current = null;
@@ -440,6 +456,16 @@ export default function MovieDetail() {
                   onRetry={handleRetry}
                   onDomainSwitch={handleDomainSwitch}
                 />
+              )}
+              {/* Soft timeout warning */}
+              {showPlayer && !showError && timeoutWarning && (
+                <div className="mt-3 p-3 rounded-md bg-yellow-500/10 border border-yellow-500/30 text-yellow-300 text-sm flex items-center justify-between">
+                  <span>Player seems blocked or slow. You can switch source or open in a new tab.</span>
+                  <div className="flex gap-2">
+                    <button onClick={handleDomainSwitch} className="px-3 py-1 rounded bg-gray-800 hover:bg-gray-700 text-white text-xs">Switch source</button>
+                    <a href={embedUrl} target="_blank" rel="noopener noreferrer" className="px-3 py-1 rounded bg-purple-600 hover:bg-purple-700 text-white text-xs">Open in new tab</a>
+                  </div>
+                </div>
               )}
               
               {/* Player Controls */}
