@@ -3,7 +3,8 @@ import { NextRequest, NextResponse } from 'next/server'
 const TMDB_BASE = 'https://api.themoviedb.org/3'
 
 export async function GET(req: NextRequest, { params }: { params: { path?: string[] } }) {
-  const token = process.env.TMDB_TOKEN
+  // Prefer server-side secret; fall back to public token if present to avoid downtime
+  const token = process.env.TMDB_TOKEN || process.env.NEXT_PUBLIC_TMDB_TOKEN
   if (!token) {
     return NextResponse.json({ error: 'TMDB token not configured' }, { status: 500 })
   }
@@ -22,7 +23,7 @@ export async function GET(req: NextRequest, { params }: { params: { path?: strin
         Authorization: `Bearer ${token}`,
         accept: 'application/json',
       },
-      // Prevent caching dynamic calls; adjust if you want ISR
+      // Prevent stale issues but allow small shared cache if desired
       cache: 'no-store',
     })
 
@@ -31,7 +32,7 @@ export async function GET(req: NextRequest, { params }: { params: { path?: strin
       status: res.status,
       headers: {
         'content-type': res.headers.get('content-type') || 'application/json',
-        'cache-control': 'no-store',
+        'cache-control': 'public, max-age=0, s-maxage=60, stale-while-revalidate=300',
       },
     })
   } catch (err: any) {
