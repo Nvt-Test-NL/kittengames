@@ -15,7 +15,7 @@ export default function PjotterAIPage() {
     {
       role: "system",
       content:
-        "You are Pjotter-AI, a helpful assistant for the KittenMovies site. Keep responses concise and friendly.",
+        "You are Pjotter-AI, a helpful assistant for the KittenGames and Movies site. Keep responses concise and friendly.",
     },
   ]);
   const [input, setInput] = useState("");
@@ -206,8 +206,9 @@ export default function PjotterAIPage() {
           <aside className="w-full lg:w-80 space-y-4">
             <div className="p-4 rounded-xl bg-gray-900/60 border border-gray-800">
               <h2 className="text-white font-semibold mb-2">Model</h2>
-              <p className="text-gray-300 text-sm">xAI: Grok 4 Fast (free)</p>
+              <p className="text-gray-300 text-sm">Pjotter-v1 (free)</p>
               <p className="text-gray-500 text-xs">Context: 2M tokens</p>
+              <p className="text-gray-500 text-xs">Created by Pjotters-Company</p>
             </div>
             <div className="p-4 rounded-xl bg-gray-900/60 border border-gray-800">
               <h2 className="text-white font-semibold mb-2">Tips</h2>
