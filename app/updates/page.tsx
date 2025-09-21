@@ -23,7 +23,7 @@ export default function UpdatesPage() {
     ] },
     { date: "2025-09-21", items: [
       "Reborn: KittenGames → KittenMovies-Reborn",
-      "New co-owner/funder: Pjotters-Company and Condingkitten",
+      "New co-owner/funder: Pjotters-Company and CodingKitten",
       "Added Pjotter-AI (via OpenRouter)",
       "Added About and Updates pages",
       "Improved movie/TV players with soft timeouts and source switching",
@@ -58,6 +58,16 @@ export default function UpdatesPage() {
 
   const [activeKey, setActiveKey] = useState<string | null>(null);
 
+  // Only render months that actually have updates, maintain chronological order within the last 24 months
+  const activeMonths = useMemo(() => {
+    return timelineMonths.filter((m) => updatesByMonth.has(m.key));
+  }, [timelineMonths, updatesByMonth]);
+
+  // Release notes newest -> oldest
+  const sortedUpdates = useMemo(() => {
+    return [...updates].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [updates]);
+
   return (
     <div className="min-h-screen bg-gray-950">
       <Header currentPage="updates" />
@@ -75,32 +85,27 @@ export default function UpdatesPage() {
             {/* Horizontal line */}
             <div className="relative">
               <div className="h-1 bg-gray-800 rounded-full" />
-              <div className="grid grid-cols-12 gap-2 mt-4">
-                {timelineMonths.map((m, idx) => {
-                  const key = m.key;
-                  const hasUpdate = updatesByMonth.has(key);
-                  // place dots on a 12-col grid per row; make it horizontally scrollable on small screens
-                  return (
-                    <div key={key} className="col-span-1 flex flex-col items-center group">
-                      {/* Dot */}
-                      <button
-                        type="button"
-                        onClick={() => hasUpdate && setActiveKey(key)}
-                        className={`mt-[-14px] w-3.5 h-3.5 rounded-full border transition-transform duration-200 ${
-                          hasUpdate
-                            ? 'bg-purple-500 border-purple-400 hover:scale-110 focus:scale-110 shadow-[0_0_0_3px_rgba(168,85,247,0.25)]'
-                            : 'bg-gray-700 border-gray-600'
-                        }`}
-                        aria-label={`Timeline ${key}${hasUpdate ? ' (has updates)' : ''}`}
-                      />
-                      {/* Month label */}
-                      <div className="mt-2 text-[10px] text-gray-400 group-hover:text-gray-300 transition-colors">
-                        {m.label}
+              {/* Only show months that have updates; evenly spaced and scrollable */}
+              <div className="mt-4 overflow-x-auto">
+                <div className="min-w-full flex items-start gap-8 px-1">
+                  {activeMonths.map((m: { key: string; label: string; year: number; month: number }, idx: number) => {
+                    const key = m.key;
+                    return (
+                      <div key={key} className="flex flex-col items-center shrink-0 group">
+                        <button
+                          type="button"
+                          onClick={() => setActiveKey(key)}
+                          className="mt-[-14px] w-3.5 h-3.5 rounded-full border bg-purple-500 border-purple-400 hover:scale-110 focus:scale-110 transition-transform shadow-[0_0_0_3px_rgba(168,85,247,0.25)]"
+                          aria-label={`Open ${key} updates`}
+                        />
+                        <div className="mt-2 text-[10px] text-gray-300 group-hover:text-white transition-colors">
+                          {m.label}
+                        </div>
+                        <div className="text-[10px] text-gray-500">{m.year}</div>
                       </div>
-                      <div className="text-[10px] text-gray-500">{m.year % 2 === 0 && idx % 12 === 0 ? m.year : ''}</div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </div>
@@ -121,11 +126,11 @@ export default function UpdatesPage() {
                     </button>
                   </div>
                   <div className="mt-3 space-y-3">
-                    {(updatesByMonth.get(activeKey) || []).map((u, idx) => (
+                    {(updatesByMonth.get(activeKey) || []).map((u: UpdateEntry, idx: number) => (
                       <div key={`${activeKey}-${idx}`} className="rounded-lg bg-gray-800/60 p-3 border border-gray-700">
                         <div className="text-xs text-gray-400 mb-1">{u.date}</div>
                         <ul className="list-disc list-inside text-gray-200 space-y-1">
-                          {u.items.map((it, i) => (
+                          {u.items.map((it: string, i: number) => (
                             <li key={`${u.date}-${i}`}>{it}</li>
                           ))}
                         </ul>
@@ -150,7 +155,7 @@ export default function UpdatesPage() {
         <section className="mb-10">
           <h2 className="text-xl font-semibold text-white mb-3">Release Notes</h2>
           <div className="space-y-6">
-            {updates.map((u: UpdateEntry, idx: number) => (
+            {sortedUpdates.map((u: UpdateEntry, idx: number) => (
               <div
                 key={`${u.date}-${idx}`}
                 className="p-4 rounded-xl bg-gray-900/60 border border-gray-800 hover:border-purple-500/40 transition-colors"
@@ -170,7 +175,7 @@ export default function UpdatesPage() {
         <section>
           <h2 className="text-xl font-semibold text-white mb-3">Coming Soon…</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {["Markdown answers in Pjotter‑AI", "Threaded chats (multiple sessions)", "Custom timeline filters", "Mobile offline mode", "Mirror priority editor for TV", "AI feedback - Witch Movie Next", "Continue watching", "More glass‑morphism polish"].map((t, i) => (
+            {["KittenGames Reborn","Markdown answers in Pjotter‑AI", "Threaded chats (multiple sessions)", "Custom timeline filters", "Mobile offline mode", "Mirror priority editor for TV", "AI feedback - Witch Movie Next", "Continue watching", "More glass‑morphism polish"].map((t, i) => (
               <div
                 key={`soon-${i}`}
                 className="p-4 rounded-xl bg-gray-900/60 border border-gray-800 hover:border-purple-500/40 transition-colors"
