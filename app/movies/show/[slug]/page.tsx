@@ -82,7 +82,7 @@ export default function ShowDetail() {
     if (loadTimeoutRef.current) clearTimeout(loadTimeoutRef.current);
     loadTimeoutRef.current = setTimeout(() => {
       handleIframeError();
-    }, 12000);
+    }, 20000);
   };
 
   const handleIframeError = () => {
@@ -327,8 +327,8 @@ export default function ShowDetail() {
                     className="w-full h-full"
                     frameBorder="0"
                     allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-                    sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-presentation"
-                    referrerPolicy="no-referrer"
+                    sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+                    referrerPolicy="origin-when-cross-origin"
                     allowFullScreen
                     title={`${show?.name} - Season ${selectedSeason} Episode ${selectedEpisode}`}
                     onError={handleIframeError}
