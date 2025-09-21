@@ -31,6 +31,7 @@ export default function MovieDetail() {
   const [embedUrl, setEmbedUrl] = useState("");
   const [isSwitching, setIsSwitching] = useState(false);
   const loadTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const backGuardTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const fetchMovieDetails = async () => {
@@ -64,8 +65,34 @@ export default function MovieDetail() {
         clearTimeout(loadTimeoutRef.current);
         loadTimeoutRef.current = null;
       }
+      if (backGuardTimeoutRef.current) {
+        clearTimeout(backGuardTimeoutRef.current);
+        backGuardTimeoutRef.current = null;
+      }
+      if (typeof window !== 'undefined') {
+        window.onpopstate = null as any;
+      }
     };
   }, []);
+
+  const installBackGuard = (durationMs = 8000) => {
+    if (typeof window === 'undefined') return;
+    try {
+      // Push a dummy state and prevent immediate back navigation
+      history.pushState(null, '', location.href);
+      const handler = () => {
+        history.go(1);
+      };
+      window.onpopstate = handler as any;
+      if (backGuardTimeoutRef.current) clearTimeout(backGuardTimeoutRef.current);
+      backGuardTimeoutRef.current = setTimeout(() => {
+        if (window.onpopstate === handler) {
+          window.onpopstate = null as any;
+        }
+        backGuardTimeoutRef.current = null;
+      }, durationMs);
+    } catch {}
+  };
 
   const handleBackClick = () => {
     router.push("/movies");
@@ -81,9 +108,11 @@ export default function MovieDetail() {
       try { window.open(embedUrl, '_blank', 'noopener,noreferrer'); } catch {}
       setShowPlayer(false);
       setShowError(false);
+      installBackGuard(6000);
       return;
     }
     setShowPlayer(true);
+    installBackGuard(6000);
     // Start timeout in case the iframe never fires onLoad due to X-Frame-Options/CSP
     if (loadTimeoutRef.current) clearTimeout(loadTimeoutRef.current);
     loadTimeoutRef.current = setTimeout(() => {
