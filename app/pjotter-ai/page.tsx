@@ -217,7 +217,7 @@ export default function PjotterAIPage() {
           <aside className="w-full lg:w-80 space-y-4">
             <div className="p-4 rounded-xl bg-gray-900/60 border border-gray-800">
               <h2 className="text-white font-semibold mb-2">Model</h2>
-              <p className="text-gray-300 text-sm">Pjotter-v1 (free)</p>
+              <p className="text-gray-300 text-sm">Pjotter-v1 (free-to-use)</p>
               <p className="text-gray-500 text-xs">Context: 2M tokens</p>
               <p className="text-gray-500 text-xs">Created by Pjotters-Company</p>
             </div>
