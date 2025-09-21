@@ -15,7 +15,7 @@ export default function PjotterAIPage() {
     {
       role: "system",
       content:
-        "You are Pjotter-AI, a helpful assistant for the KittenGames and Movies site. Keep responses concise and friendly.",
+        "You are Pjotter-AI, a helpful assistant for the KittenMovies site. Keep responses concise and friendly.",
     },
   ]);
   const [input, setInput] = useState("");
@@ -64,15 +64,21 @@ export default function PjotterAIPage() {
     if (!canSend || isLoading) return;
     setIsLoading(true);
 
-    // Compose user content (text + optional image)
-    const userContent: any[] = [];
-    if (input.trim()) userContent.push({ type: "text", text: input.trim() });
-    if (imageUrl.trim()) userContent.push({ type: "image_url", image_url: { url: imageUrl.trim() } });
+    // Compose user content (text + optional image). For OpenRouter, use:
+    // - string content when only text is present
+    // - array of parts when an image is present (and optional text)
+    const hasImage = imageUrl.trim().length > 0;
+    const userParts: any[] = [];
+    const trimmedText = input.trim();
+    if (trimmedText) userParts.push({ type: "text", text: trimmedText });
+    if (hasImage) userParts.push({ type: "image_url", image_url: { url: imageUrl.trim() } });
 
-    const nextMessages: ChatMessage[] = [
-      ...messages,
-      { role: "user", content: userContent.length > 1 ? userContent : (userContent[0] || { type: "text", text: input.trim() }) },
-    ];
+    const userMessage: ChatMessage = {
+      role: "user",
+      content: hasImage ? userParts : (trimmedText || ""),
+    };
+
+    const nextMessages: ChatMessage[] = [...messages, userMessage];
     setMessages(nextMessages);
     setInput("");
     setImageUrl("");
