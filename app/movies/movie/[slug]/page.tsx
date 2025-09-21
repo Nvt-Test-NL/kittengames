@@ -73,6 +73,16 @@ export default function MovieDetail() {
 
   const handlePlayClick = () => {
     setShowError(false);
+    // Safari often framebusts or clears history when certain providers try to navigate top.
+    const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+    const isSafari = /safari/i.test(ua) && !/chrome|crios|android/i.test(ua);
+    if (isSafari) {
+      // Open directly in a new tab for a reliable experience
+      try { window.open(embedUrl, '_blank', 'noopener,noreferrer'); } catch {}
+      setShowPlayer(false);
+      setShowError(false);
+      return;
+    }
     setShowPlayer(true);
     // Start timeout in case the iframe never fires onLoad due to X-Frame-Options/CSP
     if (loadTimeoutRef.current) clearTimeout(loadTimeoutRef.current);
