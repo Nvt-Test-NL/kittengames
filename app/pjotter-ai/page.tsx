@@ -163,7 +163,12 @@ export default function PjotterAIPage() {
                 </div>
               ))}
               {isLoading && (
-                <div className="text-sm text-gray-400">Pjotter-AI is typing…</div>
+                <div className="mt-2 inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-800/70 border border-gray-700" aria-live="polite">
+                  <div className="w-2 h-2 rounded-full bg-purple-500 animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <div className="w-2 h-2 rounded-full bg-purple-500 animate-bounce" style={{ animationDelay: '120ms' }} />
+                  <div className="w-2 h-2 rounded-full bg-purple-500 animate-bounce" style={{ animationDelay: '240ms' }} />
+                  <span className="ml-2 text-sm text-gray-300">Pjotter-AI is typing…</span>
+                </div>
               )}
             </div>
 
