@@ -142,7 +142,7 @@ export default function MovieDetail() {
       // fall through to show helper
     }
     // For both timeout and onerror, show soft warning first; escalate after 2 attempts
-    setFailAttempts((n) => {
+    setFailAttempts((n: number) => {
       const next = n + 1;
       if (next >= 2) {
         setShowError(true);
