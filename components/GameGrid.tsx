@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, Fragment } from "react"
 import {
   Loader2,
   Gamepad,
@@ -9,6 +9,7 @@ import {
   Zap,
 } from "lucide-react"
 import GameCard from "./GameGrid/GameCard"
+import AdInFeed from "./ads/AdInFeed"
 import SectionHeader from "./GameGrid/SectionHeader"
 import { categoryIcons } from "../utils/categoryIcons"
 import { shuffleArray } from "../utils/gameUtils"
@@ -177,12 +178,16 @@ export default function GameGrid({
             gradient={true}
           />
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6">
-            {recentGames.map((game: ProcessedGame) => (
-              <GameCard 
-                key={game.name} 
-                game={game}
-                isRecent={true}
-              />
+            {recentGames.map((game: ProcessedGame, idx: number) => (
+              <Fragment key={`recent-${idx}-${game.path}`}>
+                <GameCard 
+                  game={game}
+                  isRecent={true}
+                />
+                {((idx + 1) % 8 === 0) && (
+                  <AdInFeed adSlot="5154592782" />
+                )}
+              </Fragment>
             ))}
           </div>
         </div>
@@ -197,11 +202,15 @@ export default function GameGrid({
         />
         {remainingGames.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6">
-            {remainingGames.map((game: ProcessedGame) => (
-              <GameCard 
-                key={game.name} 
-                game={game}
-              />
+            {remainingGames.map((game: ProcessedGame, idx: number) => (
+              <Fragment key={`main-${idx}-${game.path}`}>
+                <GameCard 
+                  game={game}
+                />
+                {((idx + 1) % 8 === 0) && (
+                  <AdInFeed adSlot="5154592782" />
+                )}
+              </Fragment>
             ))}
           </div>
         ) : (
