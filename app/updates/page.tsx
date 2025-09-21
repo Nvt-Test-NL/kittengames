@@ -107,7 +107,7 @@ export default function UpdatesPage() {
         <section className="mb-10">
           <h2 className="text-xl font-semibold text-white mb-3">Timeline 2022–2026</h2>
           <div className="text-xs text-gray-500 mb-2">Scroll →</div>
-          <div className="relative bg-gray-900/60 border border-gray-800 rounded-xl p-5 overflow-hidden">
+          <div className="relative bg-gray-900/60 border border-gray-800 rounded-xl p-6 overflow-visible min-h-[14rem]">
             {/* Animated gradient sheen */}
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-[pulse_3s_ease-in-out_infinite]" />
 
@@ -117,7 +117,7 @@ export default function UpdatesPage() {
                 {/* center line */}
                 <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 rounded-full" style={{ background: "linear-gradient(90deg, #a855f7 0%, #f97316 25%, #ec4899 50%, #22d3ee 75%, #22c55e 100%)" }} />
                 {/* points */}
-                <div className="relative flex items-stretch gap-16 py-6">
+                <div className="relative flex items-stretch gap-16 py-10">
                   {timelineMonths.map((m: { key: string; label: string; year: number; month: number }, idx: number) => {
                     const key = m.key;
                     const isUp = idx % 2 === 0; // alternate
