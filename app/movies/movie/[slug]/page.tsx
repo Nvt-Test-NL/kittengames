@@ -184,6 +184,9 @@ export default function MovieDetail() {
     }).format(amount);
   };
 
+  // Some providers (e.g. vidsrc) break with sandbox; allow conditional unsandbox as a last resort
+  const requireUnsandbox = /vidsrc\./i.test(embedUrl);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-950">
@@ -393,8 +396,8 @@ export default function MovieDetail() {
                     className="w-full h-full"
                     frameBorder="0"
                     allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-                    // Prevent framebusting/top navigation from the embed (not granting allow-top-navigation)
-                    sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+                    // Prevent framebusting/top navigation from the embed unless provider needs unsandbox
+                    {...(!requireUnsandbox ? { sandbox: "allow-same-origin allow-scripts allow-forms allow-popups" } : {})}
                     // Some providers require a referrer to validate requests; use a permissive safe policy
                     referrerPolicy="origin-when-cross-origin"
                     allowFullScreen
