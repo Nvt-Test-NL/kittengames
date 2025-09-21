@@ -170,7 +170,7 @@ export default function Movies() {
               {trendingItems.map((item, idx) => (
                 <Fragment key={`trending-${idx}-${item.id}`}>
                   <MovieCard item={item} />
-                  {((idx + 1) % 6 === 0) && (
+                  {((idx + 1) % 3 === 0) && (
                     <AdInFeed adSlot="5154592782" />
                   )}
                 </Fragment>
