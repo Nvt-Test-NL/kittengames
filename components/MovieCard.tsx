@@ -22,7 +22,7 @@ export default function MovieCard({ item, onClick, rankNumber }: MovieCardProps)
   const title = isMovie(item) ? item.title : item.name;
   const releaseDate = isMovie(item) ? item.release_date : item.first_air_date;
   const posterUrl = getPosterUrl(item.poster_path, 'w500');
-  const itemType = isMovie(item) ? 'movie' : 'show';
+  const itemType: 'movie' | 'tv' = isMovie(item) ? 'movie' : 'tv';
   const [fav, setFav] = useState(false);
 
   useEffect(() => {
@@ -30,9 +30,7 @@ export default function MovieCard({ item, onClick, rankNumber }: MovieCardProps)
     setFav(isFavorite(item.id, typeKey));
   }, [item]);
 
-  const toggleFav = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const toggleFav = () => {
     const typeKey: 'movie' | 'tv' = isMovie(item) ? 'movie' : 'tv';
     if (fav) {
       removeFavorite(item.id, typeKey);
