@@ -246,20 +246,49 @@ export default function Movies() {
             </TabsList>
           </div>
 
-          <TabsContent value="trending" className="space-y-6">
-            <h2 className="text-2xl font-bold text-white mb-6">
-              Trending This Week
-            </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-              {trendingItems.map((item: Movie | TVShow, idx: number) => (
-                <Fragment key={`trending-${idx}-${item.id}`}>
-                  <MovieCard item={item} />
-                  {((idx + 1) % 3 === 0) && (
-                    <AdInFeed adSlot="5154592782" />
-                  )}
-                </Fragment>
-              ))}
-            </div>
+          <TabsContent value="trending" className="space-y-10">
+            {/* Top 10 Films - horizontal scroll */}
+            <section>
+              <h2 className="text-2xl font-bold text-white mb-4">Top 10 films</h2>
+              <div className="overflow-x-auto pb-2">
+                <div className="flex gap-4">
+                  {popularMovies.slice(0, 10).map((movie: Movie) => (
+                    <div key={`top-movie-${movie.id}`} className="shrink-0 w-40 sm:w-48 md:w-52">
+                      <MovieCard item={movie} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            {/* Top 10 Series - horizontal scroll */}
+            <section>
+              <h2 className="text-2xl font-bold text-white mb-4">Top 10 series</h2>
+              <div className="overflow-x-auto pb-2">
+                <div className="flex gap-4">
+                  {popularTVShows.slice(0, 10).map((show: TVShow) => (
+                    <div key={`top-show-${show.id}`} className="shrink-0 w-40 sm:w-48 md:w-52">
+                      <MovieCard item={show} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            {/* Trending grid */}
+            <section className="space-y-6">
+              <h2 className="text-2xl font-bold text-white mb-6">Trending This Week</h2>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+                {trendingItems.map((item: Movie | TVShow, idx: number) => (
+                  <Fragment key={`trending-${idx}-${item.id}`}>
+                    <MovieCard item={item} />
+                    {((idx + 1) % 3 === 0) && (
+                      <AdInFeed adSlot="5154592782" />
+                    )}
+                  </Fragment>
+                ))}
+              </div>
+            </section>
           </TabsContent>
 
           <TabsContent value="movies" className="space-y-6">
