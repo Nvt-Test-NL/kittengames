@@ -6,11 +6,11 @@ import Image from "next/image";
 import Header from "../../../../components/Header";
 import StreamingErrorHelper from "../../../../components/StreamingErrorHelper";
 import { Movie } from "../../../../types/tmdb";
-import { getPosterUrl, getBackdropUrl } from "../../../../utils/tmdb";
+import { getPosterUrl, getBackdropUrl, getMovieDetails, getTVDetails } from "../../../../utils/tmdb";
 import { getStreamingUrl, getStreamingSettings, getNextDomainId, setStreamingSettings } from "../../../../components/StreamingSettingsPanel";
 import { Loader2, Star, Calendar, Clock, ChevronLeft, Play } from "lucide-react";
-import { addFavorite, removeFavorite, isFavorite } from "../../../../utils/favorites";
-import { upsertProgress } from "../../../../utils/history";
+import { addFavorite, removeFavorite, isFavorite, getFavorites } from "../../../../utils/favorites";
+import { upsertProgress, getHistory } from "../../../../utils/history";
 import axios from "axios";
 
 interface MovieDetails extends Movie {
@@ -37,6 +37,8 @@ export default function MovieDetail() {
   const loadTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const backGuardTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [fav, setFav] = useState<boolean>(false);
+  const [similarLoading, setSimilarLoading] = useState(false);
+  const [similarItems, setSimilarItems] = useState<Array<{ item: Movie | any, type: 'movie'|'tv', reason?: string }>>([]);
 
   useEffect(() => {
     const fetchMovieDetails = async () => {
@@ -54,6 +56,39 @@ export default function MovieDetail() {
     if (slug) {
       fetchMovieDetails();
     }
+  }, [slug]);
+
+  // Fetch AI similar recs (movies + tv) with reasons
+  useEffect(() => {
+    const run = async () => {
+      if (!slug) return;
+      try {
+        setSimilarLoading(true);
+        const favs = getFavorites();
+        const hist = getHistory();
+        const res = await fetch('/api/ai/similar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ target: { tmdbId: Number(slug), type: 'movie' }, favorites: favs, history: hist })
+        });
+        const data = await res.json();
+        const ids: { tmdbId: number; type: 'movie'|'tv'; reason?: string }[] = Array.isArray(data?.ids) ? data.ids : [];
+        const details: Array<{ item: any, type: 'movie'|'tv', reason?: string }> = [];
+        for (const x of ids) {
+          try {
+            const it = x.type === 'movie' ? await getMovieDetails(x.tmdbId) : await getTVDetails(x.tmdbId);
+            details.push({ item: it, type: x.type, reason: x.reason });
+          } catch {}
+        }
+        setSimilarItems(details);
+      } catch (e) {
+        console.error('similar recs error', e);
+        setSimilarItems([]);
+      } finally {
+        setSimilarLoading(false);
+      }
+    };
+    run();
   }, [slug]);
 
   useEffect(() => {
@@ -517,6 +552,36 @@ export default function MovieDetail() {
               )}
             </div>
           </div>
+        </section>
+
+        {/* Because you liked … */}
+        <section className="container mx-auto px-4 pb-10">
+          <h2 className="text-xl font-semibold text-white mb-3">Because you liked {movie.title}</h2>
+          {similarLoading ? (
+            <div className="px-4 py-3 rounded-lg bg-slate-900/50 border border-slate-800 text-gray-300 inline-flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-bounce" />
+              <span>Bezig met aanbevelingen ophalen…</span>
+            </div>
+          ) : similarItems.length > 0 ? (
+            <div className="overflow-x-auto pb-2">
+              <div className="flex gap-4">
+                {similarItems.map((s, idx) => (
+                  <div key={`sim-${idx}-${s.type}-${s.item.id}`} className="relative shrink-0 w-40 sm:w-48 md:w-52">
+                    {s.reason && (
+                      <div className="absolute top-2 left-2 z-10 text-[10px] px-2 py-0.5 rounded-full bg-black/60 border border-emerald-400/30 text-emerald-200 backdrop-blur-md max-w-[85%] truncate" title={s.reason}>
+                        {s.reason}
+                      </div>
+                    )}
+                    {/* Reuse MovieCard which handles both movie and tv */}
+                    {/* @ts-ignore */}
+                    <MovieCard item={s.item} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="px-4 py-3 rounded-lg bg-slate-900/50 border border-slate-800 text-gray-300">Geen soortgelijke aanbevelingen gevonden.</div>
+          )}
         </section>
       </div>
     </div>
