@@ -107,17 +107,20 @@ export default function UpdatesPage() {
         <section className="mb-10">
           <h2 className="text-xl font-semibold text-white mb-3">Timeline 2022–2026</h2>
           <div className="text-xs text-gray-500 mb-2">Scroll →</div>
-          <div className="relative bg-gray-900/60 border border-gray-800 rounded-xl p-6 overflow-visible min-h-[14rem]">
+          <div className="relative bg-gray-900/60 border border-gray-800 rounded-xl p-6 overflow-visible min-h-[20rem]">
             {/* Animated gradient sheen */}
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-[pulse_3s_ease-in-out_infinite]" />
 
             {/* Line with alternating up/down capsules */}
-            <div className="relative mt-2 overflow-x-auto">
+            <div className="relative mt-2 overflow-x-auto overflow-y-hidden snap-x snap-mandatory">
               <div className="relative min-w-full px-2">
                 {/* center line */}
-                <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 rounded-full" style={{ background: "linear-gradient(90deg, #a855f7 0%, #f97316 25%, #ec4899 50%, #22d3ee 75%, #22c55e 100%)" }} />
-                {/* points (stretch across full width, edge-to-edge) */}
-                <div className="relative flex items-stretch justify-between py-10">
+                <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1.5 rounded-full" style={{ background: "linear-gradient(90deg, #6d28d9 0%, #f59e0b 25%, #ec4899 50%, #06b6d4 75%, #16a34a 100%)" }} />
+                {/* points laid out in equal columns across full width */}
+                <div
+                  className="relative items-stretch py-12"
+                  style={{ display: 'grid', gridTemplateColumns: `repeat(${timelineMonths.length}, minmax(0, 1fr))` }}
+                >
                   {timelineMonths.map((m: { key: string; label: string; year: number; month: number }, idx: number) => {
                     const key = m.key;
                     const isUp = idx % 2 === 0; // alternate
@@ -132,23 +135,28 @@ export default function UpdatesPage() {
                     const monthUpdates = updatesByMonth.get(key) || [];
                     const title = `${m.label} ${m.year}`;
                     return (
-                      <div key={key} className="relative flex flex-col items-center min-w-[6rem]">
+                      <div key={key} className="relative flex flex-col items-center snap-center">
+                        {/* colored segment under the line to mimic infographic blocks */}
+                        <div
+                          className="absolute inset-y-1/2 -translate-y-1/2 left-2 right-2 h-3 rounded-full opacity-40"
+                          style={{ background: idx % 5 === 0 ? '#6d28d9' : idx % 5 === 1 ? '#f59e0b' : idx % 5 === 2 ? '#ec4899' : idx % 5 === 3 ? '#06b6d4' : '#16a34a' }}
+                        />
                         {/* connector */}
-                        <div className={`absolute left-1/2 -translate-x-1/2 ${isUp ? 'top-0 h-1/2' : 'bottom-0 h-1/2'} w-px bg-gray-700`} />
+                        <div className={`absolute left-1/2 -translate-x-1/2 ${isUp ? 'top-0 h-1/2' : 'bottom-0 h-1/2'} w-px`} style={{ background: 'linear-gradient(to bottom, rgba(255,255,255,0.12), rgba(255,255,255,0))' }} />
                         {/* dot on line */}
                         <button
                           type="button"
                           onClick={() => setActiveKey(key)}
-                          className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-3.5 h-3.5 rounded-full border shadow-[0_0_0_3px_rgba(255,255,255,0.06)] transition-transform hover:scale-110 focus:scale-110 ${color}`}
+                          className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-4 h-4 rounded-full border-2 bg-gray-900 shadow-[0_0_0_4px_rgba(255,255,255,0.05)] transition-transform hover:scale-110 focus:scale-110 ${color}`}
                           aria-label={`Open ${key} updates`}
                           title={`${title} • ${monthUpdates.length} update${monthUpdates.length===1?'':'s'}`}
                         />
                         {/* capsule */}
-                        <div className={`absolute left-1/2 -translate-x-1/2 ${isUp ? 'top-0 -translate-y-2' : 'bottom-0 translate-y-2'} w-40`}>
-                          <div className="mx-auto rounded-2xl border border-gray-800 bg-gray-900/70 backdrop-blur p-3 text-center">
-                            <div className="text-xs text-white font-semibold">{m.year}</div>
-                            <div className="text-[10px] text-gray-400">{m.label}</div>
-                            <div className="mt-1 text-[10px] text-gray-500">{monthUpdates.length} update{monthUpdates.length===1?'':'s'}</div>
+                        <div className={`absolute left-1/2 -translate-x-1/2 ${isUp ? 'top-0 -translate-y-2' : 'bottom-0 translate-y-2'} w-48`}>
+                          <div className="mx-auto rounded-2xl border border-gray-800 bg-gray-900/70 backdrop-blur p-4 text-center">
+                            <div className="text-lg font-extrabold tracking-tight" style={{ color: idx % 5 === 0 ? '#c4b5fd' : idx % 5 === 1 ? '#fcd34d' : idx % 5 === 2 ? '#f9a8d4' : idx % 5 === 3 ? '#67e8f9' : '#86efac' }}>{m.year}</div>
+                            <div className="text-[11px] text-gray-400">{m.label}</div>
+                            <div className="mt-1 text-[11px] text-gray-500">{monthUpdates.length} update{monthUpdates.length===1?'':'s'}</div>
                           </div>
                         </div>
                       </div>
