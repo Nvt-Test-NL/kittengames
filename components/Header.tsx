@@ -308,7 +308,7 @@ export default function Header({
         {shouldShowButton("customizeTab") && (
           <button
             onClick={() => setIsTabCustomizationOpen(true)}
-            className="text-gray-300 hover:text-purple-400 transition-colors duration-200 p-1.5 rounded-full hover:bg-gray-700/50"
+            className="text-gray-300 hover:text-cyan-400 transition-colors duration-200 p-1.5 rounded-full hover:bg-slate-800/50"
             title="Customize tab appearance"
           >
             <EyeOff className="w-5 h-5" />
