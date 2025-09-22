@@ -74,7 +74,7 @@ export default function PrivacyPage() {
         <section className="space-y-2 mb-8">
           <h2 className="text-xl font-semibold text-white">Wijzigingen</h2>
           <p className="text-gray-300">We kunnen deze privacyverklaring aanpassen. Controleer regelmatig de datum hieronder.</p>
-          <p className="text-gray-400 text-sm">Laatste update: [vul datum in]</p>
+          <p className="text-gray-400 text-sm">Laatste update: 22 september 2025</p>
         </section>
       </main>
     </div>
