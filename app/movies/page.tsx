@@ -13,7 +13,6 @@ import {
   getMovieDetails,
   getTVDetails,
 } from "../../utils/tmdb";
-import { getMovieDetails, getTVDetails, getSimilarMovies, getSimilarTV } from "../../utils/tmdb";
 import { getHistory, type WatchProgress } from "../../utils/history";
 import { getFavorites, onFavoritesChanged, type FavItem } from "../../utils/favorites";
 import {
