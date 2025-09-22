@@ -87,6 +87,11 @@ export default function MovieCard({ item, onClick, rankNumber }: MovieCardProps)
           </div>
         </div>
       )}
+      {rankNumber && (
+        <div className="absolute top-3 right-3 z-20">
+          <div className="px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wide bg-emerald-500/20 text-emerald-200 border border-emerald-300/30 backdrop-blur-md">Top 10</div>
+        </div>
+      )}
 
       <div className="relative aspect-[2/3] overflow-hidden">
         <img src={posterUrl || ''} alt={title} className="w-full h-full object-cover" loading="lazy" decoding="async" />
