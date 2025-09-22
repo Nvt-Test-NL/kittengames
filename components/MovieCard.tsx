@@ -33,7 +33,7 @@ export default function MovieCard({ item, onClick }: MovieCardProps) {
 
   return (
     <Link href={href} prefetch={false} className="group block">
-      <div className="relative bg-slate-900/50 backdrop-blur-sm border border-slate-700/40 rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 ease-out cursor-pointer hover:scale-[1.02] hover:border-slate-600/60">
+      <div className="relative bg-slate-900/50 backdrop-blur-sm border border-slate-700/40 rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 ease-out cursor-pointer hover:scale-[1.02] hover:border-slate-600/60 hover:ring-1 hover:ring-emerald-300/20">
       {/* Type Badge */}
       <div className="absolute top-3 left-3 z-20">
         <div className={`flex items-center space-x-1 px-2.5 py-1 rounded-full text-xs font-medium backdrop-blur-md border transition-all duration-300 ${
