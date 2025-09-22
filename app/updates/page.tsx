@@ -107,7 +107,7 @@ export default function UpdatesPage() {
         <section className="mb-10">
           <h2 className="text-xl font-semibold text-white mb-3">Timeline 2022–2026</h2>
           <div className="text-xs text-gray-500 mb-2">Scroll →</div>
-          <div className="relative bg-gray-900/60 border border-gray-800 rounded-xl p-6 overflow-visible min-h-[20rem]">
+          <div className="relative bg-slate-900/50 border border-slate-800 rounded-xl p-6 overflow-visible min-h-[20rem]">
             {/* Animated gradient sheen */}
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-[pulse_3s_ease-in-out_infinite]" />
 
@@ -115,7 +115,7 @@ export default function UpdatesPage() {
             <div className="relative mt-2 overflow-x-auto overflow-y-hidden snap-x snap-mandatory">
               <div className="relative min-w-full px-2">
                 {/* center line */}
-                <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1.5 rounded-full" style={{ background: "linear-gradient(90deg, #6d28d9 0%, #f59e0b 25%, #ec4899 50%, #06b6d4 75%, #16a34a 100%)" }} />
+                <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1.5 rounded-full" style={{ background: "linear-gradient(90deg, #06b6d4 0%, #22c55e 50%, #06b6d4 100%)" }} />
                 {/* points laid out in equal columns across full width */}
                 <div
                   className="relative items-stretch py-12"
@@ -125,11 +125,11 @@ export default function UpdatesPage() {
                     const key = m.key;
                     const isUp = idx % 2 === 0; // alternate
                     const colorClasses = [
-                      "bg-purple-500 border-purple-400",
-                      "bg-orange-500 border-orange-400",
-                      "bg-pink-500 border-pink-400",
                       "bg-cyan-400 border-cyan-300",
-                      "bg-green-500 border-green-400",
+                      "bg-emerald-400 border-emerald-300",
+                      "bg-cyan-300 border-cyan-200",
+                      "bg-teal-400 border-teal-300",
+                      "bg-emerald-500 border-emerald-400",
                     ];
                     const color = colorClasses[idx % colorClasses.length];
                     const monthUpdates = updatesByMonth.get(key) || [];
@@ -138,8 +138,8 @@ export default function UpdatesPage() {
                       <div key={key} className="relative flex flex-col items-center snap-center">
                         {/* colored segment under the line to mimic infographic blocks */}
                         <div
-                          className="absolute inset-y-1/2 -translate-y-1/2 left-2 right-2 h-3 rounded-full opacity-40"
-                          style={{ background: idx % 5 === 0 ? '#6d28d9' : idx % 5 === 1 ? '#f59e0b' : idx % 5 === 2 ? '#ec4899' : idx % 5 === 3 ? '#06b6d4' : '#16a34a' }}
+                          className="absolute inset-y-1/2 -translate-y-1/2 left-2 right-2 h-3 rounded-full opacity-30"
+                          style={{ background: idx % 2 === 0 ? '#06b6d4' : '#10b981' }}
                         />
                         {/* connector */}
                         <div className={`absolute left-1/2 -translate-x-1/2 ${isUp ? 'top-0 h-1/2' : 'bottom-0 h-1/2'} w-px`} style={{ background: 'linear-gradient(to bottom, rgba(255,255,255,0.12), rgba(255,255,255,0))' }} />
@@ -153,7 +153,7 @@ export default function UpdatesPage() {
                         />
                         {/* capsule */}
                         <div className={`absolute left-1/2 -translate-x-1/2 ${isUp ? 'top-0 -translate-y-2' : 'bottom-0 translate-y-2'} w-48`}>
-                          <div className="mx-auto rounded-2xl border border-gray-800 bg-gray-900/70 backdrop-blur p-4 text-center">
+                          <div className="mx-auto rounded-2xl border border-slate-800 bg-slate-900/70 backdrop-blur p-4 text-center">
                             <div className="text-lg font-extrabold tracking-tight" style={{ color: idx % 5 === 0 ? '#c4b5fd' : idx % 5 === 1 ? '#fcd34d' : idx % 5 === 2 ? '#f9a8d4' : idx % 5 === 3 ? '#67e8f9' : '#86efac' }}>{m.year}</div>
                             <div className="text-[11px] text-gray-400">{m.label}</div>
                             <div className="mt-1 text-[11px] text-gray-500">{monthUpdates.length} update{monthUpdates.length===1?'':'s'}</div>
@@ -171,7 +171,7 @@ export default function UpdatesPage() {
           {activeKey && (
             <div className="fixed inset-0 z-50 flex items-center justify-center">
               <div className="absolute inset-0 bg-black/60" onClick={() => setActiveKey(null)} />
-              <div className="relative z-10 w-full max-w-lg mx-4 rounded-2xl bg-gray-900 border border-gray-800 shadow-2xl animate-[fadeIn_200ms_ease-out]">
+              <div className="relative z-10 w-full max-w-lg mx-4 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl animate-[fadeIn_200ms_ease-out]">
                 <div className="p-5">
                   <div className="flex items-start justify-between">
                     <h3 className="text-white font-semibold">{activeKey} Updates</h3>
@@ -184,7 +184,7 @@ export default function UpdatesPage() {
                   </div>
                   <div className="mt-3 space-y-3">
                     {(updatesByMonth.get(activeKey) || []).map((u: UpdateEntry, idx: number) => (
-                      <div key={`${activeKey}-${idx}`} className="rounded-lg bg-gray-800/60 p-3 border border-gray-700">
+                      <div key={`${activeKey}-${idx}`} className="rounded-lg bg-slate-800/60 p-3 border border-slate-700">
                         <div className="text-xs text-gray-400 mb-1">{u.date}</div>
                         <ul className="list-disc list-inside text-gray-200 space-y-1">
                           {u.items.map((it: string, i: number) => (
@@ -197,7 +197,7 @@ export default function UpdatesPage() {
                   <div className="mt-4 text-right">
                     <button
                       onClick={() => setActiveKey(null)}
-                      className="px-3 py-1.5 rounded-md bg-purple-600 hover:bg-purple-700 text-white text-sm"
+                      className="px-3 py-1.5 rounded-md bg-cyan-600 hover:bg-cyan-700 text-white text-sm"
                     >
                       Done
                     </button>
@@ -215,7 +215,7 @@ export default function UpdatesPage() {
             {sortedUpdates.map((u: UpdateEntry, idx: number) => (
               <div
                 key={`${u.date}-${idx}`}
-                className="p-4 rounded-xl bg-gray-900/60 border border-gray-800 hover:border-purple-500/40 transition-colors"
+                className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-cyan-400/40 transition-colors"
               >
                 <div className="text-sm text-gray-400 mb-2">{u.date}</div>
                 <ul className="list-disc list-inside text-gray-200 space-y-1">
@@ -232,13 +232,15 @@ export default function UpdatesPage() {
         <section>
           <h2 className="text-xl font-semibold text-white mb-3">Coming Soon…</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {["KittenGames Reborn","Markdown answers in Pjotter‑AI", "Threaded chats (multiple sessions)", "Custom timeline filters", "Mobile offline mode", "Mirror priority editor for TV", "AI feedback - Witch Movie Next", "Continue watching", "More glass‑morphism polish"].map((t, i) => (
+            {[
+              "KittenGames Reborn","Markdown answers in Pjotter‑AI", "Threaded chats (multiple sessions)", "Custom timeline filters", "Mobile offline mode", "Mirror priority editor for TV", "AI feedback - Witch Movie Next", "Continue watching", "More glass‑morphism polish"
+            ].map((t, i) => (
               <div
                 key={`soon-${i}`}
-                className="p-4 rounded-xl bg-gray-900/60 border border-gray-800 hover:border-purple-500/40 transition-colors"
+                className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-cyan-400/40 transition-colors"
               >
                 <div className="flex items-center gap-2">
-                  <span className="inline-block w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
+                  <span className="inline-block w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
                   <span className="text-gray-200">{t}</span>
                 </div>
               </div>
