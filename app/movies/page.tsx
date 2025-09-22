@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Fragment, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import Header from "../../components/Header";
 import dynamic from "next/dynamic";
 const MovieCard = dynamic(() => import("../../components/MovieCard"), { ssr: false });
@@ -36,8 +36,10 @@ export default function Movies() {
   const [continueWatching, setContinueWatching] = useState<(Movie | TVShow)[]>([]);
   const [aiRecommended, setAiRecommended] = useState<(Movie | TVShow)[]>([]);
   const [favoritesItems, setFavoritesItems] = useState<(Movie | TVShow)[]>([]);
-  const [whichNext, setWhichNext] = useState<Movie[]>([]);
+  type NextItem = { movie: Movie; reason?: string };
+  const [whichNext, setWhichNext] = useState<NextItem[]>([]);
   const [whichNextLoading, setWhichNextLoading] = useState<boolean>(false);
+  const [whichNextFilters, setWhichNextFilters] = useState<{ genresInclude: number[]; yearMin?: number; yearMax?: number }>({ genresInclude: [] });
   const [alreadyWatched, setAlreadyWatched] = useState<(Movie | TVShow)[]>([]);
 
   // Refs for auto-scroll carousels
@@ -87,17 +89,17 @@ export default function Movies() {
       const res = await fetch('/api/ai/recommend', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ favorites: favs, history: hist }),
+        body: JSON.stringify({ favorites: favs, history: hist, filters: whichNextFilters }),
       });
       if (!res.ok) throw new Error('recommend endpoint failed');
       const data = await res.json();
-      const ids: { tmdbId: number; type: 'movie' }[] = Array.isArray(data?.ids) ? data.ids : [];
+      const ids: { tmdbId: number; type: 'movie'; reason?: string }[] = Array.isArray(data?.ids) ? data.ids : [];
       const top10 = ids.slice(0, 10);
-      const details: Movie[] = [];
+      const details: NextItem[] = [];
       for (const it of top10) {
         try {
           const m = await getMovieDetails(it.tmdbId);
-          details.push(m);
+          details.push({ movie: m, reason: it.reason });
         } catch {}
       }
       setWhichNext(details);
@@ -107,7 +109,7 @@ export default function Movies() {
     } finally {
       setWhichNextLoading(false);
     }
-  }, []);
+  }, [whichNextFilters]);
 
   // Run once on mount
   useEffect(() => {
@@ -480,6 +482,46 @@ export default function Movies() {
             {/* Which Movie Next */}
             <section>
               <h2 className="text-2xl font-bold text-white mb-4">Which Movie Next</h2>
+              {/* Simple filters */}
+              <div className="mb-3 flex flex-wrap gap-3 items-center">
+                <div className="flex items-center gap-2 text-sm text-gray-300">
+                  <label className="text-gray-400">Genres</label>
+                  <select multiple value={whichNextFilters.genresInclude.map(String)} onChange={(e)=>{
+                    const values = Array.from(e.target.selectedOptions).map(o=>Number(o.value));
+                    setWhichNextFilters(prev=>({ ...prev, genresInclude: values }));
+                    setTimeout(()=>computeWhichNext(), 0);
+                  }} className="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-white min-w-[180px] h-9">
+                    {/* Common TMDB movie genres */}
+                    <option value="28">Action</option>
+                    <option value="12">Adventure</option>
+                    <option value="16">Animation</option>
+                    <option value="35">Comedy</option>
+                    <option value="80">Crime</option>
+                    <option value="18">Drama</option>
+                    <option value="14">Fantasy</option>
+                    <option value="27">Horror</option>
+                    <option value="9648">Mystery</option>
+                    <option value="878">Science Fiction</option>
+                    <option value="53">Thriller</option>
+                    <option value="10749">Romance</option>
+                  </select>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-300">
+                  <label className="text-gray-400">Year ≥</label>
+                  <input type="number" value={whichNextFilters.yearMin ?? ''} placeholder="e.g. 2000" onChange={(e)=>{
+                    const val = e.target.value ? Number(e.target.value) : undefined;
+                    setWhichNextFilters(prev=>({ ...prev, yearMin: val }));
+                  }} onBlur={()=>computeWhichNext()} className="w-24 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-white"/>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-300">
+                  <label className="text-gray-400">Year ≤</label>
+                  <input type="number" value={whichNextFilters.yearMax ?? ''} placeholder="e.g. 2025" onChange={(e)=>{
+                    const val = e.target.value ? Number(e.target.value) : undefined;
+                    setWhichNextFilters(prev=>({ ...prev, yearMax: val }));
+                  }} onBlur={()=>computeWhichNext()} className="w-24 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-white"/>
+                </div>
+                <button onClick={()=>computeWhichNext()} className="px-3 py-1.5 rounded bg-slate-800 border border-slate-700 text-gray-200 hover:bg-slate-700 text-sm">Opnieuw aanbevelen</button>
+              </div>
               {whichNextLoading ? (
                 <div className="px-4 py-3 rounded-lg bg-slate-900/50 border border-slate-800 text-gray-300 inline-flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-bounce" />
@@ -488,11 +530,17 @@ export default function Movies() {
               ) : whichNext.length > 0 ? (
                 <div className="overflow-x-auto pb-2">
                   <div className="flex gap-4">
-                    {whichNext.map((movie: Movie, idx: number) => (
-                      <div key={`next-${idx}-${movie.id}`} className="relative shrink-0 w-40 sm:w-48 md:w-52">
+                    {whichNext.map((item: NextItem, idx: number) => (
+                      <div key={`next-${idx}-${item.movie.id}`} className="relative shrink-0 w-40 sm:w-48 md:w-52">
                         <div className="absolute -left-1 -top-2 text-6xl font-extrabold text-emerald-300/10 select-none pointer-events-none">{idx+1}</div>
                         <div className="absolute top-2 right-2 z-10 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wide bg-emerald-500/20 text-emerald-200 border border-emerald-300/30 backdrop-blur-md"># {idx+1}</div>
-                        <MovieCard item={movie} />
+                        {/* Reason chip */}
+                        {item.reason && (
+                          <div className="absolute bottom-2 left-2 z-10 text-[10px] px-2 py-0.5 rounded-full bg-black/60 border border-emerald-400/30 text-emerald-200 backdrop-blur-md max-w-[85%] truncate" title={item.reason}>
+                            {item.reason}
+                          </div>
+                        )}
+                        <MovieCard item={item.movie} />
                       </div>
                     ))}
                   </div>
