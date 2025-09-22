@@ -40,7 +40,7 @@ Regels:
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
-        // Deze headers helpen OpenRouter met rate limits en toewijzing
+        // Deze headers helpen OpenRouter met rate limits en toewijzing 
         'HTTP-Referer': process.env.NEXT_PUBLIC_SITE_URL || 'https://localhost',
         'X-Title': 'KittenMovies',
       },
