@@ -202,7 +202,7 @@ export default function Header({
           }`}
           onMouseEnter={handleMouseEnter} // Allow hover on dot to show menu
         >
-          <div className="w-1.5 h-1.5 bg-purple-500 rounded-full shadow-sm" />
+          <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full shadow-sm" />
         </div>
 
         {/* Control buttons panel - Minimalist Pill */}
@@ -215,10 +215,10 @@ export default function Header({
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
         >
-          <div className="mt-3 ml-3 bg-gray-800/80 backdrop-blur-md rounded-full px-2.5 py-1.5 flex items-center space-x-1 shadow-lg border border-gray-700/50">
+          <div className="mt-3 ml-3 bg-slate-900/60 backdrop-blur-md rounded-full px-2.5 py-1.5 flex items-center space-x-1 shadow-lg border border-slate-700/40">
             <button
               onClick={onBackClick}
-              className={`text-gray-300 w-8 h-8 flex items-center justify-center hover:bg-gray-700/70 hover:text-blue-400 rounded-full transition-all duration-200 hover:scale-105 active:scale-95 ${backButtonMargin}`}
+              className={`text-gray-300 w-8 h-8 flex items-center justify-center hover:bg-slate-800/70 hover:text-cyan-400 rounded-full transition-all duration-200 hover:scale-105 active:scale-95 ${backButtonMargin}`}
               title="Back to games"
             >
               <ArrowLeft className="w-4 h-4" /> {/* Slightly smaller icons for smaller buttons */}
@@ -226,7 +226,7 @@ export default function Header({
 
             <button
               onClick={() => setIsTabCustomizationOpen(true)}
-              className={`text-gray-300 w-8 h-8 flex items-center justify-center hover:bg-gray-700/70 hover:text-orange-400 rounded-full transition-all duration-200 hover:scale-105 active:scale-95 ${eyeOffButtonMargin}`}
+              className={`text-gray-300 w-8 h-8 flex items-center justify-center hover:bg-slate-800/70 hover:text-emerald-400 rounded-full transition-all duration-200 hover:scale-105 active:scale-95 ${eyeOffButtonMargin}`}
               title="Customize tab appearance"
             >
               <EyeOff className="w-4 h-4" />
@@ -234,7 +234,7 @@ export default function Header({
 
             <button
               onClick={onFullscreen}
-              className={`text-gray-300 w-8 h-8 flex items-center justify-center hover:bg-gray-700/70 hover:text-purple-400 rounded-full transition-all duration-200 hover:scale-105 active:scale-95 ${fullscreenButtonMargin}`}
+              className={`text-gray-300 w-8 h-8 flex items-center justify-center hover:bg-slate-800/70 hover:text-cyan-400 rounded-full transition-all duration-200 hover:scale-105 active:scale-95 ${fullscreenButtonMargin}`}
               title="Fullscreen"
             >
               <Maximize2 className="w-4 h-4" />
@@ -259,7 +259,7 @@ export default function Header({
 
   // Full mode - updated to include movie search
   const headerContent = (
-    <div className="bg-gray-800/70 backdrop-blur-md rounded-full flex items-center px-3 py-2 w-full justify-between shadow-lg border border-gray-700/30">
+    <div className="bg-slate-900/50 backdrop-blur-md rounded-full flex items-center px-3 py-2 w-full justify-between shadow-lg border border-slate-700/30">
       <div className="flex items-center space-x-2">
         <div className="flex items-center justify-center w-8 h-8 flex-shrink-0">
           <Image
@@ -281,7 +281,7 @@ export default function Header({
                 key={item.id}
                 href={item.href}
                 className={`relative px-2.5 py-1.5 rounded-full flex items-center space-x-1.5 transition-all duration-200
-                  ${isActive ? 'text-white bg-purple-600/40' : 'text-gray-300 hover:text-white hover:bg-gray-700/50'}`}
+                  ${isActive ? 'text-white bg-cyan-600/30' : 'text-gray-300 hover:text-white hover:bg-slate-800/50'}`}
               >
                 <Icon className="w-4 h-4" /> {/* Adjusted icon size */}
                 <span className={`text-sm transition-all duration-300 origin-left ${isActive ? 'opacity-100 max-w-[100px]' : 'opacity-0 max-w-0 hidden md:inline-block md:opacity-100 md:max-w-[100px]'}`}>
@@ -299,7 +299,7 @@ export default function Header({
             href="https://app.formbricks.com/s/cm6ui6jwh0000jj03onw8dfr7"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-gray-300 hover:text-purple-400 transition-colors duration-200 p-1.5 rounded-full hover:bg-gray-700/50"
+            className="text-gray-300 hover:text-cyan-400 transition-colors duration-200 p-1.5 rounded-full hover:bg-slate-800/50"
             title="Request games/features"
           >
             <MessageCirclePlus className="w-5 h-5" />
@@ -320,7 +320,7 @@ export default function Header({
               ref={categoryButtonRef}
               onClick={handleCategoryClick}
               onKeyDown={handleCategoryKeyDown}
-              className="flex items-center space-x-1.5 text-gray-300 text-sm hover:text-purple-400 transition-colors duration-200 px-2 py-1.5 rounded-full hover:bg-gray-700/50"
+              className="flex items-center space-x-1.5 text-gray-300 text-sm hover:text-cyan-400 transition-colors duration-200 px-2 py-1.5 rounded-full hover:bg-slate-800/50"
               aria-haspopup="true"
               aria-expanded={isCategoryOpen}
             >
