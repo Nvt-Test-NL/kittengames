@@ -3,25 +3,30 @@
 @tailwind utilities;
 
 :root {
-  --background: 20 20 20;
-  --foreground: 250 250 250;
-  --accent: 139 92 246;
+  /* Neutral dark slate background and cyan accent (no purple) */
+  --background: 14 18 22; /* slate-950-ish */
+  --foreground: 240 240 244;
+  --accent: 94 234 212; /* cyan-300 */
 }
 
 body {
   color: rgb(var(--foreground));
-  background: radial-gradient(circle at top left, rgba(var(--accent), 0.15), transparent 40%),
-    radial-gradient(circle at bottom right, rgba(var(--accent), 0.15), transparent 40%), rgb(var(--background));
+  /* Subtle cyan glow with dark slate base and soft vignette */
+  background:
+    radial-gradient(1200px 800px at 20% -10%, rgba(var(--accent), 0.12), rgba(0,0,0,0) 60%),
+    radial-gradient(900px 700px at 120% 120%, rgba(45, 212, 191, 0.10), rgba(0,0,0,0) 60%),
+    linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0) 20%),
+    rgb(var(--background));
   min-height: 100vh;
 }
 
 @layer utilities {
   .glassmorphism {
-    @apply bg-white/10 backdrop-blur-md border border-white/20 shadow-lg;
+    @apply bg-white/5 backdrop-blur-md border border-white/15 shadow-lg;
   }
 
   .glassmorphism-dark {
-    @apply bg-gray-900/70 backdrop-blur-md border border-gray-700/50 shadow-lg;
+    @apply bg-slate-900/50 backdrop-blur-md border border-slate-700/40 shadow-lg;
   }
 
   .glassmorphism.rounded-full,
@@ -132,7 +137,7 @@ html {
 }
 
 .category-button:hover {
-  color: theme("colors.purple.400");
+  color: theme("colors.cyan.400");
 }
 
 .tab-customization-popup {
