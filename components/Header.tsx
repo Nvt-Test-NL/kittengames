@@ -215,7 +215,7 @@ export default function Header({
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
         >
-          <div className="mt-3 ml-3 bg-slate-900/60 backdrop-blur-md rounded-full px-2.5 py-1.5 flex items-center space-x-1 shadow-lg border border-slate-700/40">
+          <div className="mt-3 ml-3 bg-slate-900/40 backdrop-blur-lg rounded-full px-2.5 py-1.5 flex items-center space-x-1 shadow-lg border border-slate-700/30 aurora-sheen">
             <button
               onClick={onBackClick}
               className={`text-gray-300 w-8 h-8 flex items-center justify-center hover:bg-slate-800/70 hover:text-cyan-400 rounded-full transition-all duration-200 hover:scale-105 active:scale-95 ${backButtonMargin}`}
@@ -259,7 +259,7 @@ export default function Header({
 
   // Full mode - updated to include movie search
   const headerContent = (
-    <div className="bg-slate-900/50 backdrop-blur-md rounded-full flex items-center px-3 py-2 w-full justify-between shadow-lg border border-slate-700/30">
+    <div className="bg-slate-900/35 backdrop-blur-lg rounded-full flex items-center px-3 py-2 w-full justify-between shadow-lg border border-slate-700/30 aurora-sheen">
       <div className="flex items-center space-x-2">
         <div className="flex items-center justify-center w-8 h-8 flex-shrink-0">
           <Image
@@ -281,7 +281,7 @@ export default function Header({
                 key={item.id}
                 href={item.href}
                 className={`relative px-2.5 py-1.5 rounded-full flex items-center space-x-1.5 transition-all duration-200
-                  ${isActive ? 'text-white bg-cyan-600/30' : 'text-gray-300 hover:text-white hover:bg-slate-800/50'}`}
+                  ${isActive ? 'text-white bg-emerald-500/20 ring-1 ring-emerald-300/30' : 'text-gray-300 hover:text-white hover:bg-slate-800/40 hover:ring-1 hover:ring-emerald-300/20'}`}
               >
                 <Icon className="w-4 h-4" /> {/* Adjusted icon size */}
                 <span className={`text-sm transition-all duration-300 origin-left ${isActive ? 'opacity-100 max-w-[100px]' : 'opacity-0 max-w-0 hidden md:inline-block md:opacity-100 md:max-w-[100px]'}`}>
