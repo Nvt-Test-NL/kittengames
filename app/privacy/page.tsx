@@ -17,7 +17,7 @@ export default function PrivacyPage() {
         <section className="space-y-4 mb-8">
           <h2 className="text-xl font-semibold text-white">Verwerkingsverantwoordelijke</h2>
           <p className="text-gray-300">
-            Pjotters-Company is de verwerkingsverantwoordelijke. Contact: <span className="text-gray-200">[jouw e-mailadres / contactgegevens]</span>.
+            Pjotters-Company is de verwerkingsverantwoordelijke. Contact: <span className="text-gray-200">[pjotters-chain@gmail.com]</span>.
           </p>
         </section>
 
@@ -71,10 +71,17 @@ export default function PrivacyPage() {
           </p>
         </section>
 
+        <section className="space-y-4 mb-8">
+          <h2 className="text-xl font-semibold text-white">Openrouter</h2>
+          <p className="text-gray-300">
+            Pjotter-AI gebruikt Openrouter voor AI-generatie en antwoorden. Om gratis Pjotter-AI te gebruiken ga je ermee akkoord dat Openrouter.ai jouw data gebruikt voor training en verbetering van hun AI-models.
+          </p>
+        </section>
+
         <section className="space-y-2 mb-8">
           <h2 className="text-xl font-semibold text-white">Wijzigingen</h2>
           <p className="text-gray-300">We kunnen deze privacyverklaring aanpassen. Controleer regelmatig de datum hieronder.</p>
-          <p className="text-gray-400 text-sm">Laatste update: 22 september 2025</p>
+          <p className="text-gray-400 text-sm">Laatste update: 22 sep 2025</p>
         </section>
       </main>
     </div>
