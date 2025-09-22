@@ -36,6 +36,8 @@ export default function Movies() {
   const [continueWatching, setContinueWatching] = useState<(Movie | TVShow)[]>([]);
   const [aiRecommended, setAiRecommended] = useState<(Movie | TVShow)[]>([]);
   const [favoritesItems, setFavoritesItems] = useState<(Movie | TVShow)[]>([]);
+  const [whichNext, setWhichNext] = useState<Movie[]>([]);
+  const [whichNextLoading, setWhichNextLoading] = useState<boolean>(false);
   const [alreadyWatched, setAlreadyWatched] = useState<(Movie | TVShow)[]>([]);
 
   // Refs for auto-scroll carousels
@@ -75,6 +77,49 @@ export default function Movies() {
 
     fetchData();
   }, []);
+
+  // Helper to compute "Which Movie Next" using OpenRouter (server proxy)
+  const computeWhichNext = useCallback(async () => {
+    try {
+      setWhichNextLoading(true);
+      const favs: FavItem[] = getFavorites();
+      const hist: WatchProgress[] = getHistory();
+      const res = await fetch('/api/ai/recommend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ favorites: favs, history: hist }),
+      });
+      if (!res.ok) throw new Error('recommend endpoint failed');
+      const data = await res.json();
+      const ids: { tmdbId: number; type: 'movie' }[] = Array.isArray(data?.ids) ? data.ids : [];
+      const top10 = ids.slice(0, 10);
+      const details: Movie[] = [];
+      for (const it of top10) {
+        try {
+          const m = await getMovieDetails(it.tmdbId);
+          details.push(m);
+        } catch {}
+      }
+      setWhichNext(details);
+    } catch (e) {
+      console.error('WhichNext error', e);
+      setWhichNext([]);
+    } finally {
+      setWhichNextLoading(false);
+    }
+  }, []);
+
+  // Run once on mount
+  useEffect(() => {
+    computeWhichNext();
+  }, [computeWhichNext]);
+
+  // Recompute when favorites or history change (live)
+  useEffect(() => {
+    const offFav = onFavoritesChanged(() => computeWhichNext());
+    const offHist = onHistoryChanged(() => computeWhichNext());
+    return () => { offFav && offFav(); offHist && offHist(); };
+  }, [computeWhichNext]);
 
   // Live update Continue Watching and Already Watched on history changes
   useEffect(() => {
@@ -430,6 +475,31 @@ export default function Movies() {
                   </div>
                 </div>
               </div>
+            </section>
+
+            {/* Which Movie Next */}
+            <section>
+              <h2 className="text-2xl font-bold text-white mb-4">Which Movie Next</h2>
+              {whichNextLoading ? (
+                <div className="px-4 py-3 rounded-lg bg-slate-900/50 border border-slate-800 text-gray-300 inline-flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-bounce" />
+                  <span>Bezig met aanbevelingen ophalen…</span>
+                </div>
+              ) : whichNext.length > 0 ? (
+                <div className="overflow-x-auto pb-2">
+                  <div className="flex gap-4">
+                    {whichNext.map((movie: Movie, idx: number) => (
+                      <div key={`next-${idx}-${movie.id}`} className="relative shrink-0 w-40 sm:w-48 md:w-52">
+                        <div className="absolute -left-1 -top-2 text-6xl font-extrabold text-emerald-300/10 select-none pointer-events-none">{idx+1}</div>
+                        <div className="absolute top-2 right-2 z-10 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wide bg-emerald-500/20 text-emerald-200 border border-emerald-300/30 backdrop-blur-md"># {idx+1}</div>
+                        <MovieCard item={movie} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="px-4 py-3 rounded-lg bg-slate-900/50 border border-slate-800 text-gray-300">Nog geen aanbevelingen — voeg favorieten toe of kijk een film om suggesties te krijgen.</div>
+              )}
             </section>
 
             {/* Favorieten */}
