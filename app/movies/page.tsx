@@ -390,7 +390,7 @@ export default function Movies() {
           </div>
 
           <TabsContent value="trending" className="space-y-10">
-            {/* Continue Watching */}
+            {/* Verder kijken */}
             <section>
               <h2 className="text-2xl font-bold text-white mb-4">Verder kijken</h2>
               {continueWatching.length > 0 ? (
@@ -408,25 +408,7 @@ export default function Movies() {
               )}
             </section>
 
-            {/* Favorieten */}
-            <section>
-              <h2 className="text-2xl font-bold text-white mb-4">Favorieten</h2>
-              {favoritesItems.length > 0 ? (
-                <div className="overflow-x-auto pb-2">
-                  <div className="flex gap-4">
-                    {favoritesItems.map((item: Movie | TVShow, idx: number) => (
-                      <div key={`favtab-${idx}-${('id' in item)? item.id : idx}`} className="shrink-0 w-40 sm:w-48 md:w-52">
-                        <MovieCard item={item} />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div className="px-4 py-3 rounded-lg bg-slate-900/50 border border-slate-800 text-gray-300">Nog geen favorieten — klik op ☆ Fav op een titel om toe te voegen.</div>
-              )}
-            </section>
-
-            {/* Top Films - horizontal scroll */}
+            {/* Top films vandaag - horizontal scroll */}
             <section>
               <h2 className="text-2xl font-bold text-white mb-4">Top films vandaag</h2>
               <div className="relative">
@@ -450,7 +432,25 @@ export default function Movies() {
               </div>
             </section>
 
-            {/* Top Series - horizontal scroll */}
+            {/* Favorieten */}
+            <section>
+              <h2 className="text-2xl font-bold text-white mb-4">Favorieten</h2>
+              {favoritesItems.length > 0 ? (
+                <div className="overflow-x-auto pb-2">
+                  <div className="flex gap-4">
+                    {favoritesItems.map((item: Movie | TVShow, idx: number) => (
+                      <div key={`favtab-${idx}-${('id' in item)? item.id : idx}`} className="shrink-0 w-40 sm:w-48 md:w-52">
+                        <MovieCard item={item} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="px-4 py-3 rounded-lg bg-slate-900/50 border border-slate-800 text-gray-300">Nog geen favorieten — klik op ☆ Fav op een titel om toe te voegen.</div>
+              )}
+            </section>
+
+            {/* Top series vandaag - horizontal scroll */}
             <section>
               <h2 className="text-2xl font-bold text-white mb-4">Top series vandaag</h2>
               <div className="relative">
@@ -489,6 +489,24 @@ export default function Movies() {
                 </div>
               </section>
             )}
+
+            {/* Al gekeken */}
+            <section>
+              <h2 className="text-2xl font-bold text-white mb-4">Al gekeken</h2>
+              {alreadyWatched.length > 0 ? (
+                <div className="overflow-x-auto pb-2">
+                  <div className="flex gap-4">
+                    {alreadyWatched.map((item: Movie | TVShow, idx: number) => (
+                      <div key={`watchedtab-${idx}-${('id' in item)? item.id : idx}`} className="shrink-0 w-40 sm:w-48 md:w-52">
+                        <MovieCard item={item} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="px-4 py-3 rounded-lg bg-slate-900/50 border border-slate-800 text-gray-300">Nog niets uitgekeken — klik op “Klaar” in Verder kijken.</div>
+              )}
+            </section>
 
             {/* Trending grid */}
             <section className="space-y-6">
