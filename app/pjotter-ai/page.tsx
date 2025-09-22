@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import Header from "../../components/Header";
 
 interface ChatMessage {
@@ -20,9 +21,13 @@ type ChatSession = {
 };
 
 export default function PjotterAIPage() {
+  const router = useRouter();
+  const CONSENT_KEY = "pjotter_ai_consent_v1";
+
   // Multi-session state
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [currentId, setCurrentId] = useState<string>("");
+  const [consented, setConsented] = useState<boolean>(true);
 
   // Active messages are derived from current session
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -39,6 +44,12 @@ export default function PjotterAIPage() {
 
   // Load sessions from localStorage (with migration from single STORAGE_KEY)
   useEffect(() => {
+    // Check consent first
+    try {
+      const c = localStorage.getItem(CONSENT_KEY);
+      if (c !== "true") setConsented(false);
+    } catch {}
+
     try {
       const rawSessions = localStorage.getItem(SESSIONS_KEY);
       if (rawSessions) {
@@ -174,6 +185,7 @@ export default function PjotterAIPage() {
 
   const onSend = async () => {
     if (!canSend || isLoading) return;
+    if (!consented) return;
     setIsLoading(true);
 
     // Compose user content (text + optional image). For OpenRouter, use:
@@ -251,7 +263,7 @@ export default function PjotterAIPage() {
   return (
     <div className="min-h-screen bg-gray-950">
       <Header currentPage="pjotter-ai" />
-      <main className="container mx-auto px-4 py-8 pt-24">
+      <main className={`container mx-auto px-4 py-8 pt-24 ${!consented ? 'pointer-events-none blur-[1px]' : ''}`}>
         <div className="flex flex-col lg:flex-row gap-6">
           <div className="flex-1">
             <h1 className="text-2xl font-bold text-white mb-4">Pjotter-AI</h1>
@@ -370,6 +382,39 @@ export default function PjotterAIPage() {
           </aside>
         </div>
       </main>
+
+      {/* Consent Modal */}
+      {!consented && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+          <div className="relative z-10 w-[90%] max-w-lg rounded-2xl border border-slate-700 bg-slate-900/90 p-6 shadow-2xl">
+            <h2 className="text-xl font-semibold text-white mb-2">Eerste gebruik van Pjotter-AI</h2>
+            <p className="text-gray-300 text-sm mb-4">
+              Door verder te gaan, ga je akkoord met onze verwerking van gegevens zoals beschreven in de
+              <a className="text-emerald-300 hover:text-emerald-200 underline ml-1" href="/privacy" target="_blank" rel="noreferrer">privacyverklaring</a>.
+            </p>
+            <ul className="text-gray-300 text-sm list-disc list-inside mb-4 space-y-1">
+              <li>Chat-sessies worden lokaal opgeslagen in je browser (localStorage).</li>
+              <li>Eventuele externe AI-aanvragen worden tot het minimum beperkt.</li>
+              <li>Je kunt je toestemming later intrekken via je browseropslag.</li>
+            </ul>
+            <div className="flex items-center justify-end gap-3">
+              <button
+                onClick={() => { try { localStorage.setItem(CONSENT_KEY, "true"); } catch {}; setConsented(true); }}
+                className="px-4 py-2 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white"
+              >
+                Ik ga akkoord
+              </button>
+              <button
+                onClick={() => { router.push('/'); }}
+                className="px-4 py-2 rounded-md bg-slate-800 hover:bg-slate-700 text-gray-200 border border-slate-700"
+              >
+                Weiger
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
