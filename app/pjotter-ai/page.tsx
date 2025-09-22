@@ -8,9 +8,23 @@ interface ChatMessage {
   content: string | Array<any>;
 }
 
-const STORAGE_KEY = "pjotter_ai_chat_v1";
+const STORAGE_KEY = "pjotter_ai_chat_v1"; // legacy single-thread storage
+const SESSIONS_KEY = "pjotter_ai_sessions_v1";
+
+type ChatSession = {
+  id: string;
+  title: string;
+  messages: ChatMessage[];
+  createdAt: number;
+  updatedAt: number;
+};
 
 export default function PjotterAIPage() {
+  // Multi-session state
+  const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [currentId, setCurrentId] = useState<string>("");
+
+  // Active messages are derived from current session
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "system",
@@ -23,25 +37,60 @@ export default function PjotterAIPage() {
   const [isLoading, setIsLoading] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
 
-  // Load history from localStorage
+  // Load sessions from localStorage (with migration from single STORAGE_KEY)
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
+      const rawSessions = localStorage.getItem(SESSIONS_KEY);
+      if (rawSessions) {
+        const parsed: ChatSession[] = JSON.parse(rawSessions);
         if (Array.isArray(parsed) && parsed.length) {
-          setMessages(parsed);
+          setSessions(parsed.sort((a,b)=>b.updatedAt - a.updatedAt));
+          setCurrentId(parsed[0].id);
+          setMessages(parsed[0].messages);
+          return;
         }
       }
+      // Migrate legacy single thread if present
+      const legacy = localStorage.getItem(STORAGE_KEY);
+      if (legacy) {
+        const parsedLegacy: ChatMessage[] = JSON.parse(legacy);
+        const seed: ChatSession = {
+          id: crypto.randomUUID(),
+          title: "Chat 1",
+          messages: parsedLegacy,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        };
+        setSessions([seed]);
+        setCurrentId(seed.id);
+        setMessages(seed.messages);
+        localStorage.setItem(SESSIONS_KEY, JSON.stringify([seed]));
+        return;
+      }
+      // Otherwise, start a fresh session
+      const systemMsg: ChatMessage = { role: "system", content: messages[0].content };
+      const fresh: ChatSession = {
+        id: crypto.randomUUID(),
+        title: "Nieuw chat",
+        messages: [systemMsg],
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      };
+      setSessions([fresh]);
+      setCurrentId(fresh.id);
+      setMessages(fresh.messages);
+      localStorage.setItem(SESSIONS_KEY, JSON.stringify([fresh]));
     } catch {}
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Persist history
+  // Persist sessions when any change occurs
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+      if (!sessions.length) return;
+      localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
     } catch {}
-  }, [messages]);
+  }, [sessions]);
 
   // Auto scroll
   useEffect(() => {
@@ -49,6 +98,69 @@ export default function PjotterAIPage() {
   }, [messages, isLoading]);
 
   const canSend = useMemo(() => input.trim().length > 0 || imageUrl.trim().length > 0, [input, imageUrl]);
+
+  const upsertCurrentSession = (nextMessages: ChatMessage[], title?: string) => {
+    setSessions(prev => {
+      if (!currentId) return prev;
+      const next = prev.map(s => s.id === currentId ? {
+        ...s,
+        title: title ?? s.title,
+        messages: nextMessages,
+        updatedAt: Date.now(),
+      } : s).sort((a,b)=>b.updatedAt - a.updatedAt);
+      return next;
+    });
+  };
+
+  const createSession = () => {
+    const name = prompt("Naam voor nieuwe chat:", "Nieuwe chat") || "Nieuwe chat";
+    const system: ChatMessage = { role: "system", content: messages[0].content };
+    const session: ChatSession = {
+      id: crypto.randomUUID(),
+      title: name,
+      messages: [system],
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+    setSessions(prev => [session, ...prev]);
+    setCurrentId(session.id);
+    setMessages(session.messages);
+  };
+
+  const renameSession = (id: string) => {
+    const current = sessions.find(s => s.id === id);
+    const name = prompt("Nieuwe naam:", current?.title || "Chat")?.trim();
+    if (!name) return;
+    setSessions(prev => prev.map(s => s.id === id ? { ...s, title: name, updatedAt: Date.now() } : s));
+  };
+
+  const deleteSession = (id: string) => {
+    if (!confirm("Deze chat verwijderen?")) return;
+    setSessions(prev => prev.filter(s => s.id !== id));
+    if (id === currentId) {
+      const remaining = sessions.filter(s => s.id !== id);
+      if (remaining.length) {
+        setCurrentId(remaining[0].id);
+        setMessages(remaining[0].messages);
+      } else {
+        // create fresh
+        const system: ChatMessage = { role: "system", content: messages[0].content };
+        const fresh: ChatSession = {
+          id: crypto.randomUUID(), title: "Nieuw chat", messages: [system], createdAt: Date.now(), updatedAt: Date.now()
+        };
+        setSessions([fresh]);
+        setCurrentId(fresh.id);
+        setMessages(fresh.messages);
+      }
+    }
+  };
+
+  const switchSession = (id: string) => {
+    const s = sessions.find(x => x.id === id);
+    if (!s) return;
+    setCurrentId(id);
+    setMessages(s.messages);
+  };
 
   const handleFile = async (file: File) => {
     // Convert to data URL (many OpenRouter providers accept data URLs)
@@ -80,6 +192,7 @@ export default function PjotterAIPage() {
 
     const nextMessages: ChatMessage[] = [...messages, userMessage];
     setMessages(nextMessages);
+    upsertCurrentSession(nextMessages);
     setInput("");
     setImageUrl("");
 
@@ -95,7 +208,11 @@ export default function PjotterAIPage() {
       }
       const data = await res.json();
       const content = data?.choices?.[0]?.message?.content || "";
-      setMessages((prev) => [...prev, { role: "assistant", content }]);
+      setMessages((prev) => {
+        const updated = [...prev, { role: "assistant", content }];
+        upsertCurrentSession(updated);
+        return updated;
+      });
     } catch (e: any) {
       setMessages((prev) => [
         ...prev,
@@ -125,11 +242,10 @@ export default function PjotterAIPage() {
   };
 
   const clearChat = () => {
-    const system = messages.find((m) => m.role === "system");
-    const seed: ChatMessage[] = system ? [system] : [
-      { role: "system", content: "You are Pjotter-AI, a helpful assistant for the KittenMovies site." },
-    ];
+    const system = messages.find((m) => m.role === "system") || { role: "system", content: "You are Pjotter-AI, a helpful assistant for the KittenMovies site." };
+    const seed: ChatMessage[] = [system];
     setMessages(seed);
+    upsertCurrentSession(seed);
   };
 
   return (
@@ -139,6 +255,26 @@ export default function PjotterAIPage() {
         <div className="flex flex-col lg:flex-row gap-6">
           <div className="flex-1">
             <h1 className="text-2xl font-bold text-white mb-4">Pjotter-AI</h1>
+            {/* Sessions Bar */}
+            <div className="mb-3 flex items-center gap-2 overflow-x-auto pb-1">
+              {sessions.map((s) => (
+                <button
+                  key={s.id}
+                  onClick={() => switchSession(s.id)}
+                  className={`px-3 py-1.5 rounded-full text-sm border transition-all whitespace-nowrap ${s.id===currentId ? 'bg-emerald-500/20 text-emerald-200 border-emerald-400/30' : 'bg-slate-900/40 text-gray-300 border-slate-700/40 hover:border-emerald-300/30'}`}
+                  title={new Date(s.updatedAt).toLocaleString()}
+                >
+                  {s.title}
+                </button>
+              ))}
+              <button onClick={createSession} className="px-2.5 py-1.5 rounded-full text-sm bg-slate-900/40 text-emerald-200 border border-slate-700/40 hover:border-emerald-300/30">+ New</button>
+              {currentId && (
+                <>
+                  <button onClick={() => renameSession(currentId)} className="px-2.5 py-1.5 rounded-full text-sm bg-slate-900/40 text-gray-300 border border-slate-700/40 hover:border-emerald-300/30">Rename</button>
+                  <button onClick={() => deleteSession(currentId)} className="px-2.5 py-1.5 rounded-full text-sm bg-slate-900/40 text-red-300 border border-slate-700/40 hover:border-red-400/40">Delete</button>
+                </>
+              )}
+            </div>
             <div ref={listRef} className="h-[60vh] bg-slate-900/50 rounded-xl border border-slate-800 overflow-y-auto p-4">
               {messages.filter((m)=>m.role!=="system").map((m, idx) => (
                 <div key={idx} className="mb-4">
