@@ -3,36 +3,41 @@
 @tailwind utilities;
 
 :root {
-  /* Neutral dark slate background and cyan accent (no purple) */
-  --background: 14 18 22; /* slate-950-ish */
-  --foreground: 240 240 244;
-  --accent: 94 234 212; /* cyan-300 */
+  /* Aurora Glass theme */
+  --background: 12 14 20; /* deep night */
+  --foreground: 240 242 246;
+  --accent: 110 231 183; /* mint/teal (emerald-300) */
 }
 
 body {
   color: rgb(var(--foreground));
-  /* Subtle cyan glow with dark slate base and soft vignette */
+  /* Aurora overlays: very soft multi‑gradient glows */
   background:
-    radial-gradient(1200px 800px at 20% -10%, rgba(var(--accent), 0.12), rgba(0,0,0,0) 60%),
-    radial-gradient(900px 700px at 120% 120%, rgba(45, 212, 191, 0.10), rgba(0,0,0,0) 60%),
+    radial-gradient(1000px 700px at 15% -10%, rgba(56, 189, 248, 0.10), rgba(0,0,0,0) 60%), /* sky */
+    radial-gradient(900px 650px at 110% 110%, rgba(16, 185, 129, 0.10), rgba(0,0,0,0) 60%), /* emerald */
+    radial-gradient(700px 500px at 80% 0%, rgba(244, 63, 94, 0.05), rgba(0,0,0,0) 60%),   /* rose (very low) */
     linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0) 20%),
     rgb(var(--background));
   min-height: 100vh;
 }
 
 @layer utilities {
-  .glassmorphism {
-    @apply bg-white/5 backdrop-blur-md border border-white/15 shadow-lg;
+  .glass-panel { @apply bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl; }
+  .glass-card { @apply bg-white/6 backdrop-blur-md border border-white/10 rounded-xl shadow-md; }
+  .glass-input { @apply bg-slate-900/40 backdrop-blur border border-slate-700/40 text-slate-100 placeholder-slate-400; }
+  .glass-hover:hover { @apply border-cyan-400/40 shadow-[0_0_24px_rgba(34,211,238,0.15)]; }
+  .aurora-sheen { @apply relative overflow-hidden; }
+  .aurora-sheen::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    background: conic-gradient(from 180deg at 50% 50%, rgba(56,189,248,0.10), rgba(16,185,129,0.08), rgba(244,63,94,0.05), rgba(56,189,248,0.10));
+    filter: blur(24px);
+    opacity: 0;
+    transition: opacity 300ms ease;
+    pointer-events: none;
   }
-
-  .glassmorphism-dark {
-    @apply bg-slate-900/50 backdrop-blur-md border border-slate-700/40 shadow-lg;
-  }
-
-  .glassmorphism.rounded-full,
-  .glassmorphism-dark.rounded-full {
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-  }
+  .aurora-sheen:hover::after { opacity: 1; }
 }
 
 .game-card {
@@ -137,7 +142,7 @@ html {
 }
 
 .category-button:hover {
-  color: theme("colors.cyan.400");
+  color: theme("colors.emerald.300");
 }
 
 .tab-customization-popup {
