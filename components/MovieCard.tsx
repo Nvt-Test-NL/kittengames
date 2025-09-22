@@ -4,21 +4,43 @@ import { Star, Calendar, Play, Film, Tv } from 'lucide-react';
 import { Movie, TVShow } from '../types/tmdb';
 import { getPosterUrl } from '../utils/tmdb';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { addFavorite, removeFavorite, isFavorite } from '../utils/favorites';
 
 interface MovieCardProps {
   item: Movie | TVShow;
   onClick?: () => void;
+  rankNumber?: number; // optional big rank for Top 10 rails
 }
 
 const isMovie = (item: Movie | TVShow): item is Movie => {
   return 'title' in item;
 };
 
-export default function MovieCard({ item, onClick }: MovieCardProps) {
+export default function MovieCard({ item, onClick, rankNumber }: MovieCardProps) {
   const title = isMovie(item) ? item.title : item.name;
   const releaseDate = isMovie(item) ? item.release_date : item.first_air_date;
   const posterUrl = getPosterUrl(item.poster_path, 'w500');
   const itemType = isMovie(item) ? 'movie' : 'show';
+  const [fav, setFav] = useState(false);
+
+  useEffect(() => {
+    const typeKey: 'movie' | 'tv' = isMovie(item) ? 'movie' : 'tv';
+    setFav(isFavorite(item.id, typeKey));
+  }, [item]);
+
+  const toggleFav = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const typeKey: 'movie' | 'tv' = isMovie(item) ? 'movie' : 'tv';
+    if (fav) {
+      removeFavorite(item.id, typeKey);
+      setFav(false);
+    } else {
+      addFavorite(item.id, typeKey);
+      setFav(true);
+    }
+  };
 
   const formatDate = (dateString: string) => {
     if (!dateString) return 'TBA';
@@ -34,6 +56,12 @@ export default function MovieCard({ item, onClick }: MovieCardProps) {
   return (
     <Link href={href} prefetch={false} className="group block">
       <div className="relative bg-slate-900/50 backdrop-blur-sm border border-slate-700/40 rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 ease-out cursor-pointer hover:scale-[1.02] hover:border-slate-600/60 hover:ring-1 hover:ring-emerald-300/20">
+      {/* Rank overlay */}
+      {typeof rankNumber === 'number' && (
+        <div className="absolute -left-1 -top-2 text-8xl md:text-9xl font-extrabold text-emerald-300/10 select-none pointer-events-none drop-shadow-[0_0_12px_rgba(16,185,129,0.15)]">
+          {rankNumber}
+        </div>
+      )}
       {/* Type Badge */}
       <div className="absolute top-3 left-3 z-20">
         <div className={`flex items-center space-x-1 px-2.5 py-1 rounded-full text-xs font-medium backdrop-blur-md border transition-all duration-300 ${
@@ -66,20 +94,6 @@ export default function MovieCard({ item, onClick }: MovieCardProps) {
       <div className="relative aspect-[2/3] overflow-hidden">
         {posterUrl ? (
           <Image
-            src={posterUrl}
-            alt={title}
-            fill
-            className="object-cover transition-all duration-700 ease-out group-hover:scale-110 group-hover:brightness-110 group-hover:contrast-110"
-            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-          />
-        ) : (
-          <div className="w-full h-full bg-slate-700 flex items-center justify-center">
-            <Play className="w-12 h-12 text-gray-500" />
-          </div>
-        )}
-        
-        {/* Enhanced overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 ease-out" />
         
         {/* Hover content */}
         <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out">
