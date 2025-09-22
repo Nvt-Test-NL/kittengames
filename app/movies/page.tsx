@@ -159,7 +159,7 @@ export default function Movies() {
         )}
           <div className="flex items-center justify-center min-h-[60vh]">
             <div className="text-center">
-              <Loader2 className="w-8 h-8 animate-spin text-purple-500 mx-auto mb-4" />
+              <Loader2 className="w-8 h-8 animate-spin text-cyan-400 mx-auto mb-4" />
               <p className="text-gray-400">Loading movies and shows...</p>
             </div>
           </div>
