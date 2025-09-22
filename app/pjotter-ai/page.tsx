@@ -100,14 +100,14 @@ export default function PjotterAIPage() {
   const canSend = useMemo(() => input.trim().length > 0 || imageUrl.trim().length > 0, [input, imageUrl]);
 
   const upsertCurrentSession = (nextMessages: ChatMessage[], title?: string) => {
-    setSessions(prev => {
+    setSessions((prev: ChatSession[]) => {
       if (!currentId) return prev;
-      const next = prev.map(s => s.id === currentId ? {
+      const next = prev.map((s: ChatSession) => s.id === currentId ? {
         ...s,
         title: title ?? s.title,
         messages: nextMessages,
         updatedAt: Date.now(),
-      } : s).sort((a,b)=>b.updatedAt - a.updatedAt);
+      } : s).sort((a: ChatSession, b: ChatSession)=>b.updatedAt - a.updatedAt);
       return next;
     });
   };
@@ -122,7 +122,7 @@ export default function PjotterAIPage() {
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };
-    setSessions(prev => [session, ...prev]);
+    setSessions((prev: ChatSession[]) => [session, ...prev]);
     setCurrentId(session.id);
     setMessages(session.messages);
   };
@@ -131,14 +131,14 @@ export default function PjotterAIPage() {
     const current = sessions.find(s => s.id === id);
     const name = prompt("Nieuwe naam:", current?.title || "Chat")?.trim();
     if (!name) return;
-    setSessions(prev => prev.map(s => s.id === id ? { ...s, title: name, updatedAt: Date.now() } : s));
+    setSessions((prev: ChatSession[]) => prev.map((s: ChatSession) => s.id === id ? { ...s, title: name, updatedAt: Date.now() } : s));
   };
 
   const deleteSession = (id: string) => {
     if (!confirm("Deze chat verwijderen?")) return;
-    setSessions(prev => prev.filter(s => s.id !== id));
+    setSessions((prev: ChatSession[]) => prev.filter((s: ChatSession) => s.id !== id));
     if (id === currentId) {
-      const remaining = sessions.filter(s => s.id !== id);
+      const remaining = sessions.filter((s: ChatSession) => s.id !== id);
       if (remaining.length) {
         setCurrentId(remaining[0].id);
         setMessages(remaining[0].messages);
@@ -156,7 +156,7 @@ export default function PjotterAIPage() {
   };
 
   const switchSession = (id: string) => {
-    const s = sessions.find(x => x.id === id);
+    const s = sessions.find((x: ChatSession) => x.id === id);
     if (!s) return;
     setCurrentId(id);
     setMessages(s.messages);
