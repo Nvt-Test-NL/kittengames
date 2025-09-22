@@ -75,8 +75,8 @@ const GameCard = memo(({ game, isRecent = false }: { game: ProcessedGame; isRece
 
   return (
     <div
-      className={`group relative bg-gray-800 rounded-xl overflow-hidden border border-gray-700/30 transition-all duration-300 cursor-pointer aspect-square
-        hover:border-purple-500/40 hover:shadow-lg 
+      className={`group relative bg-slate-900/60 rounded-xl overflow-hidden border border-slate-700/30 transition-all duration-300 cursor-pointer aspect-square aurora-sheen
+        hover:border-emerald-400/40 hover:shadow-lg 
       `}
       onMouseEnter={handleMouseEnter}
       onMouseMove={handleMouseMove}
@@ -120,7 +120,7 @@ const GameCard = memo(({ game, isRecent = false }: { game: ProcessedGame; isRece
         
         {!isLoading && !imageError && (
           <div 
-            className={`absolute inset-0 bg-gray-900/75 backdrop-blur-sm flex flex-col items-center justify-center transition-opacity duration-300 p-3 sm:p-4 rounded-xl
+            className={`absolute inset-0 bg-slate-950/70 backdrop-blur-sm flex flex-col items-center justify-center transition-opacity duration-300 p-3 sm:p-4 rounded-xl
               ${isHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'} 
             `}
           >
@@ -130,9 +130,9 @@ const GameCard = memo(({ game, isRecent = false }: { game: ProcessedGame; isRece
               </h3>
               
               <div className="flex items-center justify-center">
-                <div className="bg-gray-800/80 p-3 sm:p-4 rounded-lg"> 
+                <div className="bg-slate-800/80 p-3 sm:p-4 rounded-lg"> 
                   {React.cloneElement(categoryIcons[game.type.toLowerCase()] || categoryIcons["other"], { 
-                    className: "w-6 h-6 sm:w-7 sm:h-7 text-purple-400" 
+                    className: "w-6 h-6 sm:w-7 sm:h-7 text-emerald-300" 
                   })}
                 </div>
               </div>
