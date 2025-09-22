@@ -6,6 +6,7 @@ import { getPosterUrl } from '../utils/tmdb';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { addFavorite, removeFavorite, isFavorite } from '../utils/favorites';
+import { upsertProgress } from '../utils/history';
 
 interface MovieCardProps {
   item: Movie | TVShow;
@@ -89,7 +90,7 @@ export default function MovieCard({ item, onClick, rankNumber }: MovieCardProps)
       )}
       {rankNumber && (
         <div className="absolute top-3 right-3 z-20">
-          <div className="px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wide bg-emerald-500/20 text-emerald-200 border border-emerald-300/30 backdrop-blur-md">Top 10</div>
+          <div className="px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wide bg-emerald-500/20 text-emerald-200 border border-emerald-300/30 backdrop-blur-md">Plek {rankNumber}</div>
         </div>
       )}
 
@@ -113,8 +114,30 @@ export default function MovieCard({ item, onClick, rankNumber }: MovieCardProps)
         )}
         {/* Favorite toggle (hidden in Top10) */}
         {!rankNumber && (
-          <button onClick={toggleFav} className={`absolute top-2 right-2 z-10 px-2 py-1 rounded-full text-xs border transition-all backdrop-blur-md ${fav ? 'bg-emerald-500/20 text-emerald-200 border-emerald-400/30' : 'bg-slate-900/50 text-gray-300 border-slate-700/40 hover:border-emerald-300/30'}`} aria-label="Toggle favorite">
+          <button
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFav(); }}
+            className={`absolute bottom-2 right-2 z-10 px-2 py-1 rounded-full text-xs border transition-all backdrop-blur-md ${fav ? 'bg-emerald-500/20 text-emerald-200 border-emerald-400/30' : 'bg-slate-900/50 text-gray-300 border-slate-700/40 hover:border-emerald-300/30'}`}
+            aria-label="Toggle favorite"
+          >
             {fav ? '★ Fav' : '☆ Fav'}
+          </button>
+        )}
+
+        {/* Quick action: mark as watching (hidden in Top10) */}
+        {!rankNumber && (
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              try {
+                upsertProgress({ tmdbId: item.id, type: itemType, lastPositionSec: 30 });
+              } catch {}
+            }}
+            className="absolute bottom-2 left-2 z-10 px-2 py-1 rounded-full text-xs border transition-all backdrop-blur-md bg-slate-900/50 text-gray-300 border-slate-700/40 hover:border-emerald-300/30"
+            aria-label="Markeer als bezig"
+            title="Markeer als bezig (Verder kijken)"
+          >
+            ▶ Verder
           </button>
         )}
 
