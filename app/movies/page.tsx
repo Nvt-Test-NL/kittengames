@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Fragment } from "react";
+import React, { useState, useEffect, Fragment, useRef } from "react";
 import Header from "../../components/Header";
 import dynamic from "next/dynamic";
 const MovieCard = dynamic(() => import("../../components/MovieCard"), { ssr: false });
@@ -13,6 +13,7 @@ import {
 } from "../../utils/tmdb";
 import { getMovieDetails, getTVDetails, getSimilarMovies, getSimilarTV } from "../../utils/tmdb";
 import { getHistory, type WatchProgress } from "../../utils/history";
+import { getFavorites, type FavItem } from "../../utils/favorites";
 import {
   Tabs,
   TabsContent,
@@ -31,6 +32,12 @@ export default function Movies() {
   const [activeTab, setActiveTab] = useState("trending");
   const [continueWatching, setContinueWatching] = useState<(Movie | TVShow)[]>([]);
   const [aiRecommended, setAiRecommended] = useState<(Movie | TVShow)[]>([]);
+  const [favoritesItems, setFavoritesItems] = useState<(Movie | TVShow)[]>([]);
+  const [alreadyWatched, setAlreadyWatched] = useState<(Movie | TVShow)[]>([]);
+
+  // Refs for auto-scroll carousels
+  const filmsRowRef = useRef<HTMLDivElement | null>(null);
+  const seriesRowRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -64,6 +71,31 @@ export default function Movies() {
     fetchData();
   }, []);
 
+  // Auto-scroll for Top 10 rails
+  useEffect(() => {
+    const makeAutoScroll = (el: HTMLDivElement | null) => {
+      if (!el) return () => {};
+      let dir = 1;
+      const step = () => {
+        if (!el) return;
+        const max = el.scrollWidth - el.clientWidth;
+        const nearEnd = el.scrollLeft >= max - 10;
+        const nearStart = el.scrollLeft <= 10;
+        if (nearEnd) dir = -1;
+        if (nearStart) dir = 1;
+        el.scrollBy({ left: dir * 2, behavior: 'smooth' });
+      };
+      const id = window.setInterval(step, 50);
+      return () => window.clearInterval(id);
+    };
+    const cleanFilms = makeAutoScroll(filmsRowRef.current);
+    const cleanSeries = makeAutoScroll(seriesRowRef.current);
+    return () => {
+      cleanFilms && cleanFilms();
+      cleanSeries && cleanSeries();
+    };
+  }, [popularMovies, popularTVShows]);
+
   // Load Continue Watching from localStorage and AI recommendations
   useEffect(() => {
     const loadPersonalized = async () => {
@@ -80,6 +112,28 @@ export default function Movies() {
           if (cwDetails.length >= 10) break;
         }
         setContinueWatching(cwDetails);
+
+        // Already watched (finished)
+        const watched = history.filter(h => h.finished).sort((a,b)=>b.updatedAt - a.updatedAt).slice(0, 12);
+        const watchedDetails: (Movie | TVShow)[] = [];
+        for (const h of watched) {
+          try {
+            const item = h.type === 'movie' ? await getMovieDetails(h.tmdbId) : await getTVDetails(h.tmdbId);
+            watchedDetails.push(item);
+          } catch {}
+        }
+        setAlreadyWatched(watchedDetails);
+
+        // Favorites
+        const favs: FavItem[] = getFavorites();
+        const favDetails: (Movie | TVShow)[] = [];
+        for (const f of favs.slice(0, 12)) {
+          try {
+            const item = f.type === 'movie' ? await getMovieDetails(f.tmdbId) : await getTVDetails(f.tmdbId);
+            favDetails.push(item);
+          } catch {}
+        }
+        setFavoritesItems(favDetails);
 
         // AI recommendations via OpenRouter -> returns ids; if empty, fallback to TMDB similar from last item
         let recItems: (Movie | TVShow)[] = [];
@@ -132,6 +186,37 @@ export default function Movies() {
       <div className="min-h-screen bg-gray-950">
         <Header currentPage="movies" />
         <main className="container mx-auto px-4 py-8 pt-24">
+        {/* Continue Watching */}
+        {continueWatching.length > 0 && (
+          <section className="mb-10">
+            <h2 className="text-2xl font-bold text-white mb-4">Verder kijken</h2>
+            <div className="overflow-x-auto pb-2">
+              <div className="flex gap-4">
+                {continueWatching.map((item: Movie | TVShow, idx: number) => (
+                  <div key={`cw-${idx}-${('id' in item)? item.id : idx}`} className="shrink-0 w-40 sm:w-48 md:w-52">
+                    <MovieCard item={item} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Favorites */}
+        {favoritesItems.length > 0 && (
+          <section className="mb-10">
+            <h2 className="text-2xl font-bold text-white mb-4">Favorieten</h2>
+            <div className="overflow-x-auto pb-2">
+              <div className="flex gap-4">
+                {favoritesItems.map((item: Movie | TVShow, idx: number) => (
+                  <div key={`fav-${idx}-${('id' in item)? item.id : idx}`} className="shrink-0 w-40 sm:w-48 md:w-52">
+                    <MovieCard item={item} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
         {/* Continue Watching */}
         {continueWatching.length > 0 && (
           <section className="mb-12">
@@ -251,10 +336,10 @@ export default function Movies() {
             <section>
               <h2 className="text-2xl font-bold text-white mb-4">Top 10 films</h2>
               <div className="overflow-x-auto pb-2">
-                <div className="flex gap-4">
-                  {popularMovies.slice(0, 10).map((movie: Movie) => (
+                <div ref={filmsRowRef} className="flex gap-4">
+                  {popularMovies.slice(0, 10).map((movie: Movie, i: number) => (
                     <div key={`top-movie-${movie.id}`} className="shrink-0 w-40 sm:w-48 md:w-52">
-                      <MovieCard item={movie} />
+                      <MovieCard item={movie} rankNumber={i+1} />
                     </div>
                   ))}
                 </div>
@@ -265,15 +350,31 @@ export default function Movies() {
             <section>
               <h2 className="text-2xl font-bold text-white mb-4">Top 10 series</h2>
               <div className="overflow-x-auto pb-2">
-                <div className="flex gap-4">
-                  {popularTVShows.slice(0, 10).map((show: TVShow) => (
+                <div ref={seriesRowRef} className="flex gap-4">
+                  {popularTVShows.slice(0, 10).map((show: TVShow, i: number) => (
                     <div key={`top-show-${show.id}`} className="shrink-0 w-40 sm:w-48 md:w-52">
-                      <MovieCard item={show} />
+                      <MovieCard item={show} rankNumber={i+1} />
                     </div>
                   ))}
                 </div>
               </div>
             </section>
+
+            {/* Already Watched */}
+            {alreadyWatched.length > 0 && (
+              <section>
+                <h2 className="text-2xl font-bold text-white mb-4">Al gekeken</h2>
+                <div className="overflow-x-auto pb-2">
+                  <div className="flex gap-4">
+                    {alreadyWatched.map((item: Movie | TVShow, idx: number) => (
+                      <div key={`watched-${idx}-${('id' in item)? item.id : idx}`} className="shrink-0 w-40 sm:w-48 md:w-52">
+                        <MovieCard item={item} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </section>
+            )}
 
             {/* Trending grid */}
             <section className="space-y-6">
