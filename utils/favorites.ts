@@ -22,10 +22,22 @@ export function addFavorite(tmdbId: number, type: 'movie' | 'tv') {
   if (favs.some(f => f.tmdbId === tmdbId && f.type === type)) return;
   const next = [{ tmdbId, type }, ...favs].slice(0, 200);
   localStorage.setItem(KEY, JSON.stringify(next));
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event('kg_favorites_changed'));
+  }
 }
 
 export function removeFavorite(tmdbId: number, type: 'movie' | 'tv') {
   const favs = getFavorites();
   const next = favs.filter(f => !(f.tmdbId === tmdbId && f.type === type));
   localStorage.setItem(KEY, JSON.stringify(next));
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event('kg_favorites_changed'));
+  }
+}
+
+export function onFavoritesChanged(handler: () => void) {
+  if (typeof window === 'undefined') return () => {};
+  window.addEventListener('kg_favorites_changed', handler);
+  return () => window.removeEventListener('kg_favorites_changed', handler);
 }
