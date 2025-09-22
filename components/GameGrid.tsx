@@ -121,11 +121,11 @@ export default function GameGrid({
       <div className="flex justify-center items-center h-96">
         <div className="flex flex-col items-center space-y-4">
           <div className="relative">
-            <Loader2 className="w-16 h-16 text-purple-400 animate-spin" />
-            <div className="absolute inset-0 w-16 h-16 rounded-full bg-purple-500/20 animate-pulse" />
+            <Loader2 className="w-16 h-16 text-cyan-400 animate-spin" />
+            <div className="absolute inset-0 w-16 h-16 rounded-full bg-emerald-400/20 animate-pulse" />
           </div>
           <div className="text-center">
-            <p className="text-xl font-semibold text-purple-300 mb-2">Loading Games</p>
+            <p className="text-xl font-semibold text-emerald-300 mb-2">Loading Games</p>
             <p className="text-sm text-gray-400">Preparing your gaming experience...</p>
           </div>
         </div>
@@ -136,15 +136,15 @@ export default function GameGrid({
   if (error) {
     return (
       <div className="flex justify-center items-center h-96 text-center">
-        <div className="p-12 rounded-3xl bg-gradient-to-br from-red-800/80 to-red-900/80 backdrop-blur-md max-w-md border border-red-700/40">
-          <div className="bg-gradient-to-r from-red-600 to-red-700 p-4 rounded-2xl w-fit mx-auto mb-6">
+        <div className="p-12 rounded-3xl bg-gradient-to-br from-emerald-800/80 to-emerald-900/80 backdrop-blur-md max-w-md border border-emerald-700/40">
+          <div className="bg-gradient-to-r from-cyan-600 to-emerald-600 p-4 rounded-2xl w-fit mx-auto mb-6">
             <Gamepad className="w-12 h-12 text-white" />
           </div>
           <h3 className="text-2xl font-bold text-white mb-3">Error Loading Games</h3>
-          <p className="text-red-200 leading-relaxed mb-4">{error}</p>
+          <p className="text-emerald-200 leading-relaxed mb-4">{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+            className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg transition-colors"
           >
             Try Again
           </button>
@@ -156,8 +156,8 @@ export default function GameGrid({
   if (games.length === 0) {
     return (
       <div className="flex justify-center items-center h-96 text-center">
-        <div className="p-12 rounded-3xl bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-md max-w-md border border-gray-700/40">
-          <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-4 rounded-2xl w-fit mx-auto mb-6">
+        <div className="p-12 rounded-3xl bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-md max-w-md border border-slate-700/40">
+          <div className="bg-gradient-to-r from-emerald-500 to-cyan-500 p-4 rounded-2xl w-fit mx-auto mb-6">
             <Gamepad className="w-12 h-12 text-white" />
           </div>
           <h3 className="text-2xl font-bold text-white mb-3">No Games Found</h3>
@@ -215,8 +215,8 @@ export default function GameGrid({
           </div>
         ) : (
           <div className="flex justify-center items-center h-96 text-center">
-            <div className="p-12 rounded-3xl bg-gradient-to-br from-gray-800/60 to-gray-900/60 backdrop-blur-md max-w-md border border-gray-700/30">
-              <div className="bg-gradient-to-r from-gray-600 to-gray-700 p-4 rounded-2xl w-fit mx-auto mb-6">
+            <div className="p-12 rounded-3xl bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-md max-w-md border border-slate-700/30">
+              <div className="bg-gradient-to-r from-slate-600 to-slate-700 p-4 rounded-2xl w-fit mx-auto mb-6">
                 <Search className="w-12 h-12 text-white opacity-60" />
               </div>
               <h3 className="text-xl font-bold text-white mb-3">No Games Found</h3>
