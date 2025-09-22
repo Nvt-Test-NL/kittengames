@@ -1,5 +1,5 @@
+"use client";
 import React from 'react';
-import Image from 'next/image';
 import { Star, Calendar, Play, Film, Tv } from 'lucide-react';
 import { Movie, TVShow } from '../types/tmdb';
 import { getPosterUrl } from '../utils/tmdb';
@@ -92,9 +92,7 @@ export default function MovieCard({ item, onClick, rankNumber }: MovieCardProps)
       </div>
 
       <div className="relative aspect-[2/3] overflow-hidden">
-        {posterUrl ? (
-          <Image
-        
+        <img src={posterUrl || ''} alt={title} className="w-full h-full object-cover" loading="lazy" decoding="async" />
         {/* Hover content */}
         <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out">
           <div className="space-y-2">
@@ -109,7 +107,11 @@ export default function MovieCard({ item, onClick, rankNumber }: MovieCardProps)
             </p>
           </div>
         </div>
-        
+        {/* Favorite toggle */}
+        <button onClick={toggleFav} className={`absolute top-2 right-2 z-10 px-2 py-1 rounded-full text-xs border transition-all backdrop-blur-md ${fav ? 'bg-emerald-500/20 text-emerald-200 border-emerald-400/30' : 'bg-slate-900/50 text-gray-300 border-slate-700/40 hover:border-emerald-300/30'}`} aria-label="Toggle favorite">
+          {fav ? '★ Fav' : '☆ Fav'}
+        </button>
+
         {/* Shimmer effect */}
         <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000 ease-out" />
       </div>
