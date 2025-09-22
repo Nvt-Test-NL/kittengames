@@ -12,13 +12,14 @@ interface MovieCardProps {
   item: Movie | TVShow;
   onClick?: () => void;
   rankNumber?: number; // optional big rank for Top 10 rails
+  showMarkFinished?: boolean; // when true (e.g., in Continue Watching), show 'Klaar' quick action
 }
 
 const isMovie = (item: Movie | TVShow): item is Movie => {
   return 'title' in item;
 };
 
-export default function MovieCard({ item, onClick, rankNumber }: MovieCardProps) {
+export default function MovieCard({ item, onClick, rankNumber, showMarkFinished }: MovieCardProps) {
   const title = isMovie(item) ? item.title : item.name;
   const releaseDate = isMovie(item) ? item.release_date : item.first_air_date;
   const posterUrl = getPosterUrl(item.poster_path, 'w500');
@@ -50,7 +51,7 @@ export default function MovieCard({ item, onClick, rankNumber }: MovieCardProps)
     return rating.toFixed(1);
   };
 
-  const href = `/movies/${itemType}/${item.id}`;
+  const href = `/movies/${isMovie(item) ? 'movie' : 'show'}/${item.id}`;
 
   return (
     <Link href={href} prefetch={false} className="group block">
@@ -121,21 +122,28 @@ export default function MovieCard({ item, onClick, rankNumber }: MovieCardProps)
           </button>
         )}
 
-        {/* Quick action: mark as watching (hidden in Top10) */}
+        {/* Quick action: bottom-left button. In Continue Watching we show 'Klaar'; else '▶ Verder' */}
         {!rankNumber && (
           <button
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
               try {
-                upsertProgress({ tmdbId: item.id, type: itemType, lastPositionSec: 30 });
+                if (showMarkFinished) {
+                  // dynamically import to avoid circular import issues
+                  import('../utils/history').then(({ markFinished }) => {
+                    markFinished(item.id, itemType);
+                  }).catch(() => {});
+                } else {
+                  upsertProgress({ tmdbId: item.id, type: itemType, lastPositionSec: 30 });
+                }
               } catch {}
             }}
-            className="absolute bottom-2 left-2 z-10 px-2 py-1 rounded-full text-xs border transition-all backdrop-blur-md bg-slate-900/50 text-gray-300 border-slate-700/40 hover:border-emerald-300/30"
-            aria-label="Markeer als bezig"
-            title="Markeer als bezig (Verder kijken)"
+            className={`absolute bottom-2 left-2 z-10 px-2 py-1 rounded-full text-xs border transition-all backdrop-blur-md ${showMarkFinished ? 'bg-emerald-600/20 text-emerald-200 border-emerald-400/30' : 'bg-slate-900/50 text-gray-300 border-slate-700/40 hover:border-emerald-300/30'}`}
+            aria-label={showMarkFinished ? 'Markeer als klaar' : 'Markeer als bezig'}
+            title={showMarkFinished ? 'Verplaats naar Al gekeken' : 'Markeer als bezig (Verder kijken)'}
           >
-            ▶ Verder
+            {showMarkFinished ? 'Klaar' : '▶ Verder'}
           </button>
         )}
 
