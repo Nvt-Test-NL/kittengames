@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import React, { useEffect, useMemo, useRef, useState, useCallback, Fragment } from "react";
 import Header from "../../components/Header";
 import dynamic from "next/dynamic";
 const MovieCard = dynamic(() => import("../../components/MovieCard"), { ssr: false });
