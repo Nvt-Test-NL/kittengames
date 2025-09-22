@@ -139,11 +139,11 @@ export default function PjotterAIPage() {
         <div className="flex flex-col lg:flex-row gap-6">
           <div className="flex-1">
             <h1 className="text-2xl font-bold text-white mb-4">Pjotter-AI</h1>
-            <div ref={listRef} className="h-[60vh] bg-gray-900/60 rounded-xl border border-gray-800 overflow-y-auto p-4">
+            <div ref={listRef} className="h-[60vh] bg-slate-900/50 rounded-xl border border-slate-800 overflow-y-auto p-4">
               {messages.filter((m)=>m.role!=="system").map((m, idx) => (
                 <div key={idx} className="mb-4">
                   <div className="text-xs text-gray-400 mb-1">{m.role === "user" ? "You" : "Pjotter-AI"}</div>
-                  <div className={`px-3 py-2 rounded-lg whitespace-pre-wrap ${m.role === 'user' ? 'bg-purple-600/30 text-white' : 'bg-gray-800/80 text-gray-100'}`}>
+                  <div className={`px-3 py-2 rounded-lg whitespace-pre-wrap ${m.role === 'user' ? 'bg-cyan-600/20 text-white' : 'bg-slate-800/80 text-gray-100'}`}>
                     {Array.isArray(m.content) ? (
                       <>
                         {m.content.map((part: any, i: number) => {
@@ -163,10 +163,10 @@ export default function PjotterAIPage() {
                 </div>
               ))}
               {isLoading && (
-                <div className="mt-2 inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-800/70 border border-gray-700" aria-live="polite">
-                  <div className="w-2 h-2 rounded-full bg-purple-500 animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="w-2 h-2 rounded-full bg-purple-500 animate-bounce" style={{ animationDelay: '120ms' }} />
-                  <div className="w-2 h-2 rounded-full bg-purple-500 animate-bounce" style={{ animationDelay: '240ms' }} />
+                <div className="mt-2 inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800/70 border border-slate-700" aria-live="polite">
+                  <div className="w-2 h-2 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <div className="w-2 h-2 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: '120ms' }} />
+                  <div className="w-2 h-2 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: '240ms' }} />
                   <span className="ml-2 text-sm text-gray-300">Pjotter-AI is typing…</span>
                 </div>
               )}
@@ -178,14 +178,14 @@ export default function PjotterAIPage() {
                   type="file"
                   accept="image/*"
                   onChange={onUpload}
-                  className="text-sm text-gray-300 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-gray-800 file:text-white hover:file:bg-gray-700"
+                  className="text-sm text-gray-300 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-slate-800 file:text-white hover:file:bg-slate-700"
                 />
                 <input
                   type="url"
                   placeholder="of plak een afbeelding-URL…"
                   value={imageUrl}
                   onChange={(e) => setImageUrl(e.target.value)}
-                  className="flex-1 bg-gray-900 border border-gray-800 rounded-md px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-purple-500"
+                  className="flex-1 glass-input rounded-md px-3 py-2 text-sm focus:outline-none focus:border-cyan-400"
                 />
               </div>
               <textarea
@@ -194,19 +194,19 @@ export default function PjotterAIPage() {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={onKeyDown}
                 rows={3}
-                className="w-full bg-gray-900 border border-gray-800 rounded-md px-3 py-2 text-gray-200 focus:outline-none focus:border-purple-500"
+                className="w-full glass-input rounded-md px-3 py-2 focus:outline-none focus:border-cyan-400"
               />
               <div className="flex items-center justify-between">
                 <button
                   onClick={clearChat}
-                  className="px-3 py-2 text-sm rounded-md bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700"
+                  className="px-3 py-2 text-sm rounded-md bg-slate-800 hover:bg-slate-700 text-gray-200 border border-slate-700"
                 >
                   Clear chat
                 </button>
                 <button
                   onClick={onSend}
                   disabled={!canSend || isLoading}
-                  className="px-4 py-2 rounded-md bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-medium"
+                  className="px-4 py-2 rounded-md bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50 text-white font-medium"
                 >
                   Send
                 </button>
@@ -215,13 +215,13 @@ export default function PjotterAIPage() {
           </div>
 
           <aside className="w-full lg:w-80 space-y-4">
-            <div className="p-4 rounded-xl bg-gray-900/60 border border-gray-800">
+            <div className="p-4 rounded-xl bg-slate-900/50 border border-slate-800">
               <h2 className="text-white font-semibold mb-2">Model</h2>
               <p className="text-gray-300 text-sm">Pjotter-v1 (free-to-use)</p>
               <p className="text-gray-500 text-xs">Context: 2M tokens</p>
               <p className="text-gray-500 text-xs">Created by Pjotters-Company</p>
             </div>
-            <div className="p-4 rounded-xl bg-gray-900/60 border border-gray-800">
+            <div className="p-4 rounded-xl bg-slate-900/50 border border-slate-800">
               <h2 className="text-white font-semibold mb-2">Tips</h2>
               <ul className="text-sm text-gray-300 list-disc list-inside space-y-1">
                 <li>Upload of plak een afbeelding-URL voor multimodale vragen.</li>
