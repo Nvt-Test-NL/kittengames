@@ -29,6 +29,9 @@ export function getHistory(): WatchProgress[] {
 export function saveHistory(items: WatchProgress[]) {
   if (typeof window === 'undefined') return
   localStorage.setItem(HISTORY_KEY, JSON.stringify(items.slice(0, 200)))
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event('kg_history_changed'))
+  }
 }
 
 export function upsertProgress(p: Omit<WatchProgress, 'startedAt' | 'updatedAt'>) {
@@ -51,6 +54,12 @@ export function markFinished(tmdbId: number, type: WatchItemType) {
     items[idx].updatedAt = Date.now()
     saveHistory(items)
   }
+}
+
+export function onHistoryChanged(handler: () => void) {
+  if (typeof window === 'undefined') return () => {}
+  window.addEventListener('kg_history_changed', handler)
+  return () => window.removeEventListener('kg_history_changed', handler)
 }
 
 export interface WatchlistEntry { tmdbId: number; type: WatchItemType; addedAt: number }
