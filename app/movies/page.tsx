@@ -10,10 +10,12 @@ import {
   getPopularTVShows,
   getTrendingAll,
   getBackdropUrl,
+  getMovieDetails,
+  getTVDetails,
 } from "../../utils/tmdb";
 import { getMovieDetails, getTVDetails, getSimilarMovies, getSimilarTV } from "../../utils/tmdb";
 import { getHistory, type WatchProgress } from "../../utils/history";
-import { getFavorites, type FavItem } from "../../utils/favorites";
+import { getFavorites, onFavoritesChanged, type FavItem } from "../../utils/favorites";
 import {
   Tabs,
   TabsContent,
@@ -71,6 +73,23 @@ export default function Movies() {
     };
 
     fetchData();
+  }, []);
+
+  // Refresh favorites live when they change
+  useEffect(() => {
+    const updateFavs = async () => {
+      const favs: FavItem[] = getFavorites();
+      const favDetails: (Movie | TVShow)[] = [];
+      for (const f of favs.slice(0, 12)) {
+        try {
+          const item = f.type === 'movie' ? await getMovieDetails(f.tmdbId) : await getTVDetails(f.tmdbId);
+          favDetails.push(item);
+        } catch {}
+      }
+      setFavoritesItems(favDetails);
+    };
+    const off = onFavoritesChanged(updateFavs);
+    return () => { off && off(); };
   }, []);
 
   // Auto-scroll for Top 10 rails
@@ -193,9 +212,9 @@ export default function Movies() {
         <Header currentPage="movies" />
         <main className="container mx-auto px-4 py-8 pt-24">
         {/* Continue Watching */}
-        {continueWatching.length > 0 && (
-          <section className="mb-10">
-            <h2 className="text-2xl font-bold text-white mb-4">Verder kijken</h2>
+        <section className="mb-10">
+          <h2 className="text-2xl font-bold text-white mb-4">Verder kijken</h2>
+          {continueWatching.length > 0 ? (
             <div className="overflow-x-auto pb-2">
               <div className="flex gap-4">
                 {continueWatching.map((item: Movie | TVShow, idx: number) => (
@@ -205,13 +224,15 @@ export default function Movies() {
                 ))}
               </div>
             </div>
-          </section>
-        )}
+          ) : (
+            <div className="px-4 py-3 rounded-lg bg-slate-900/50 border border-slate-800 text-gray-300">Geen titels om verder te kijken — begin met afspelen om hier te verschijnen.</div>
+          )}
+        </section>
 
         {/* Favorites */}
-        {favoritesItems.length > 0 && (
-          <section className="mb-10">
-            <h2 className="text-2xl font-bold text-white mb-4">Favorieten</h2>
+        <section className="mb-10">
+          <h2 className="text-2xl font-bold text-white mb-4">Favorieten</h2>
+          {favoritesItems.length > 0 ? (
             <div className="overflow-x-auto pb-2">
               <div className="flex gap-4">
                 {favoritesItems.map((item: Movie | TVShow, idx: number) => (
@@ -221,8 +242,10 @@ export default function Movies() {
                 ))}
               </div>
             </div>
-          </section>
-        )}
+          ) : (
+            <div className="px-4 py-3 rounded-lg bg-slate-900/50 border border-slate-800 text-gray-300">Nog geen favorieten — klik op ☆ Fav op een titel om toe te voegen.</div>
+          )}
+        </section>
         {/* Continue Watching */}
         {continueWatching.length > 0 && (
           <section className="mb-12">
