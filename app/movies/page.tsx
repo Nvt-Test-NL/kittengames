@@ -390,9 +390,45 @@ export default function Movies() {
           </div>
 
           <TabsContent value="trending" className="space-y-10">
-            {/* Top 10 Films - horizontal scroll */}
+            {/* Continue Watching */}
             <section>
-              <h2 className="text-2xl font-bold text-white mb-4">Top 10 films</h2>
+              <h2 className="text-2xl font-bold text-white mb-4">Verder kijken</h2>
+              {continueWatching.length > 0 ? (
+                <div className="overflow-x-auto pb-2">
+                  <div className="flex gap-4">
+                    {continueWatching.map((item: Movie | TVShow, idx: number) => (
+                      <div key={`cwtab-${idx}-${('id' in item)? item.id : idx}`} className="shrink-0 w-40 sm:w-48 md:w-52">
+                        <MovieCard item={item} showMarkFinished />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="px-4 py-3 rounded-lg bg-slate-900/50 border border-slate-800 text-gray-300">Geen titels om verder te kijken — begin met afspelen om hier te verschijnen.</div>
+              )}
+            </section>
+
+            {/* Favorieten */}
+            <section>
+              <h2 className="text-2xl font-bold text-white mb-4">Favorieten</h2>
+              {favoritesItems.length > 0 ? (
+                <div className="overflow-x-auto pb-2">
+                  <div className="flex gap-4">
+                    {favoritesItems.map((item: Movie | TVShow, idx: number) => (
+                      <div key={`favtab-${idx}-${('id' in item)? item.id : idx}`} className="shrink-0 w-40 sm:w-48 md:w-52">
+                        <MovieCard item={item} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="px-4 py-3 rounded-lg bg-slate-900/50 border border-slate-800 text-gray-300">Nog geen favorieten — klik op ☆ Fav op een titel om toe te voegen.</div>
+              )}
+            </section>
+
+            {/* Top Films - horizontal scroll */}
+            <section>
+              <h2 className="text-2xl font-bold text-white mb-4">Top films vandaag</h2>
               <div className="relative">
                 {/* Chevrons */}
                 <button onClick={() => filmsRowRef.current?.scrollBy({ left: -300, behavior: 'smooth' })} className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 items-center justify-center rounded-full bg-slate-900/60 border border-slate-700/40 text-white hover:border-emerald-300/30">‹</button>
@@ -414,9 +450,9 @@ export default function Movies() {
               </div>
             </section>
 
-            {/* Top 10 Series - horizontal scroll */}
+            {/* Top Series - horizontal scroll */}
             <section>
-              <h2 className="text-2xl font-bold text-white mb-4">Top 10 series</h2>
+              <h2 className="text-2xl font-bold text-white mb-4">Top series vandaag</h2>
               <div className="relative">
                 {/* Chevrons */}
                 <button onClick={() => seriesRowRef.current?.scrollBy({ left: -300, behavior: 'smooth' })} className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 items-center justify-center rounded-full bg-slate-900/60 border border-slate-700/40 text-white hover:border-emerald-300/30">‹</button>
