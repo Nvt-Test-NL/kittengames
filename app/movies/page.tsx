@@ -38,6 +38,8 @@ export default function Movies() {
   // Refs for auto-scroll carousels
   const filmsRowRef = useRef<HTMLDivElement | null>(null);
   const seriesRowRef = useRef<HTMLDivElement | null>(null);
+  const filmsHoverRef = useRef(false);
+  const seriesHoverRef = useRef(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -78,6 +80,10 @@ export default function Movies() {
       let dir = 1;
       const step = () => {
         if (!el) return;
+        // pause when hovering
+        if ((el === filmsRowRef.current && filmsHoverRef.current) || (el === seriesRowRef.current && seriesHoverRef.current)) {
+          return;
+        }
         const max = el.scrollWidth - el.clientWidth;
         const nearEnd = el.scrollLeft >= max - 10;
         const nearStart = el.scrollLeft <= 10;
@@ -335,13 +341,23 @@ export default function Movies() {
             {/* Top 10 Films - horizontal scroll */}
             <section>
               <h2 className="text-2xl font-bold text-white mb-4">Top 10 films</h2>
-              <div className="overflow-x-auto pb-2">
-                <div ref={filmsRowRef} className="flex gap-4">
+              <div className="relative">
+                {/* Chevrons */}
+                <button onClick={() => filmsRowRef.current?.scrollBy({ left: -300, behavior: 'smooth' })} className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 items-center justify-center rounded-full bg-slate-900/60 border border-slate-700/40 text-white hover:border-emerald-300/30">‹</button>
+                <button onClick={() => filmsRowRef.current?.scrollBy({ left: 300, behavior: 'smooth' })} className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 items-center justify-center rounded-full bg-slate-900/60 border border-slate-700/40 text-white hover:border-emerald-300/30">›</button>
+                <div className="overflow-x-auto pb-2">
+                  <div
+                    ref={filmsRowRef}
+                    className="flex gap-4 snap-x snap-mandatory"
+                    onMouseEnter={() => { filmsHoverRef.current = true; }}
+                    onMouseLeave={() => { filmsHoverRef.current = false; }}
+                  >
                   {popularMovies.slice(0, 10).map((movie: Movie, i: number) => (
-                    <div key={`top-movie-${movie.id}`} className="shrink-0 w-40 sm:w-48 md:w-52">
+                    <div key={`top-movie-${movie.id}`} className="shrink-0 w-40 sm:w-48 md:w-52 snap-start">
                       <MovieCard item={movie} rankNumber={i+1} />
                     </div>
                   ))}
+                  </div>
                 </div>
               </div>
             </section>
@@ -349,13 +365,23 @@ export default function Movies() {
             {/* Top 10 Series - horizontal scroll */}
             <section>
               <h2 className="text-2xl font-bold text-white mb-4">Top 10 series</h2>
-              <div className="overflow-x-auto pb-2">
-                <div ref={seriesRowRef} className="flex gap-4">
+              <div className="relative">
+                {/* Chevrons */}
+                <button onClick={() => seriesRowRef.current?.scrollBy({ left: -300, behavior: 'smooth' })} className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 items-center justify-center rounded-full bg-slate-900/60 border border-slate-700/40 text-white hover:border-emerald-300/30">‹</button>
+                <button onClick={() => seriesRowRef.current?.scrollBy({ left: 300, behavior: 'smooth' })} className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 items-center justify-center rounded-full bg-slate-900/60 border border-slate-700/40 text-white hover:border-emerald-300/30">›</button>
+                <div className="overflow-x-auto pb-2">
+                  <div
+                    ref={seriesRowRef}
+                    className="flex gap-4 snap-x snap-mandatory"
+                    onMouseEnter={() => { seriesHoverRef.current = true; }}
+                    onMouseLeave={() => { seriesHoverRef.current = false; }}
+                  >
                   {popularTVShows.slice(0, 10).map((show: TVShow, i: number) => (
-                    <div key={`top-show-${show.id}`} className="shrink-0 w-40 sm:w-48 md:w-52">
+                    <div key={`top-show-${show.id}`} className="shrink-0 w-40 sm:w-48 md:w-52 snap-start">
                       <MovieCard item={show} rankNumber={i+1} />
                     </div>
                   ))}
+                  </div>
                 </div>
               </div>
             </section>
