@@ -62,34 +62,31 @@ export default function MovieCard({ item, onClick, rankNumber }: MovieCardProps)
           {rankNumber}
         </div>
       )}
-      {/* Type Badge */}
+      {/* Type Badge (compact in Top10: icon only) */}
       <div className="absolute top-3 left-3 z-20">
-        <div className={`flex items-center space-x-1 px-2.5 py-1 rounded-full text-xs font-medium backdrop-blur-md border transition-all duration-300 ${
+        <div className={`flex items-center ${rankNumber ? 'px-1.5 py-1' : 'px-2.5 py-1'} rounded-full text-xs font-medium backdrop-blur-md border transition-all duration-300 ${
           itemType === 'movie' 
             ? 'bg-cyan-500/20 text-cyan-300 border-cyan-300/30 group-hover:bg-cyan-500/30' 
             : 'bg-emerald-500/20 text-emerald-300 border-emerald-300/30 group-hover:bg-emerald-500/30'
         }`}>
           {itemType === 'movie' ? (
-            <>
-              <Film className="w-3 h-3" />
-              <span>Movie</span>
-            </>
+            <Film className="w-3 h-3" />
           ) : (
-            <>
-              <Tv className="w-3 h-3" />
-              <span>Series</span>
-            </>
+            <Tv className="w-3 h-3" />
           )}
+          {!rankNumber && <span className="ml-1">{itemType === 'movie' ? 'Movie' : 'Series'}</span>}
         </div>
       </div>
 
-      {/* Rating Badge */}
-      <div className="absolute top-3 right-3 z-20">
-        <div className="flex items-center space-x-1 px-2.5 py-1 bg-black/60 backdrop-blur-md rounded-full text-xs font-medium text-white border border-gray-600/40 group-hover:bg-black/80 transition-all duration-300">
-          <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-          <span>{formatRating(item.vote_average)}</span>
+      {/* Rating Badge (hidden in Top10) */}
+      {!rankNumber && (
+        <div className="absolute top-3 right-3 z-20">
+          <div className="flex items-center space-x-1 px-2.5 py-1 bg-black/60 backdrop-blur-md rounded-full text-xs font-medium text-white border border-gray-600/40 group-hover:bg-black/80 transition-all duration-300">
+            <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+            <span>{formatRating(item.vote_average)}</span>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="relative aspect-[2/3] overflow-hidden">
         <img src={posterUrl || ''} alt={title} className="w-full h-full object-cover" loading="lazy" decoding="async" />
@@ -109,10 +106,12 @@ export default function MovieCard({ item, onClick, rankNumber }: MovieCardProps)
             </div>
           </div>
         )}
-        {/* Favorite toggle */}
-        <button onClick={toggleFav} className={`absolute top-2 right-2 z-10 px-2 py-1 rounded-full text-xs border transition-all backdrop-blur-md ${fav ? 'bg-emerald-500/20 text-emerald-200 border-emerald-400/30' : 'bg-slate-900/50 text-gray-300 border-slate-700/40 hover:border-emerald-300/30'}`} aria-label="Toggle favorite">
-          {fav ? '★ Fav' : '☆ Fav'}
-        </button>
+        {/* Favorite toggle (hidden in Top10) */}
+        {!rankNumber && (
+          <button onClick={toggleFav} className={`absolute top-2 right-2 z-10 px-2 py-1 rounded-full text-xs border transition-all backdrop-blur-md ${fav ? 'bg-emerald-500/20 text-emerald-200 border-emerald-400/30' : 'bg-slate-900/50 text-gray-300 border-slate-700/40 hover:border-emerald-300/30'}`} aria-label="Toggle favorite">
+            {fav ? '★ Fav' : '☆ Fav'}
+          </button>
+        )}
 
         {/* Shimmer effect */}
         <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000 ease-out" />
