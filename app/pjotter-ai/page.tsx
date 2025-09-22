@@ -9,7 +9,7 @@ interface ChatMessage {
   content: string | Array<any>;
 }
 
-const STORAGE_KEY = "pjotter_ai_chat_v1"; // legacy single-thread storage
+const STORAGE_KEY = "pjotter_ai_chat_v1"; // legacy single-thread storage 
 const SESSIONS_KEY = "pjotter_ai_sessions_v1";
 
 type ChatSession = {
