@@ -7,8 +7,10 @@ import Header from "../../../../components/Header";
 import StreamingErrorHelper from "../../../../components/StreamingErrorHelper";
 import { TVShow } from "../../../../types/tmdb";
 import { getPosterUrl, getBackdropUrl } from "../../../../utils/tmdb";
-import { getStreamingUrl } from "../../../../components/StreamingSettingsPanel";
+import { getStreamingUrl, getStreamingSettings, getNextDomainId, setStreamingSettings } from "../../../../components/StreamingSettingsPanel";
 import { Loader2, Star, Calendar, LayoutList, ChevronLeft, Play } from "lucide-react";
+import { addFavorite, removeFavorite, isFavorite } from "../../../../utils/favorites";
+import { upsertProgress } from "../../../../utils/history";
 import axios from "axios";
 
 interface Season {
@@ -31,6 +33,9 @@ export default function ShowDetail() {
   const [embedUrl, setEmbedUrl] = useState("");
   const loadTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const backGuardTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [timeoutWarning, setTimeoutWarning] = useState(false);
+  const [failAttempts, setFailAttempts] = useState(0);
+  const [fav, setFav] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchShowDetails = async () => {
@@ -48,6 +53,13 @@ export default function ShowDetail() {
     if (slug) {
       fetchShowDetails();
     }
+  }, [slug]);
+
+  useEffect(() => {
+    try {
+      const idNum = Number(slug);
+      if (!Number.isNaN(idNum)) setFav(isFavorite(idNum, 'tv'));
+    } catch {}
   }, [slug]);
 
   useEffect(() => {
@@ -77,20 +89,56 @@ export default function ShowDetail() {
 
   const handlePlayClick = () => {
     setShowError(false);
+    setTimeoutWarning(false);
+    setFailAttempts(0);
     setShowPlayer(true);
+    // Seed Continue Watching for TV (S/E ignored in simple history)
+    try { upsertProgress({ tmdbId: Number(slug), type: 'tv', lastPositionSec: 5 }); } catch {}
     installBackGuard(6000);
     if (loadTimeoutRef.current) clearTimeout(loadTimeoutRef.current);
     loadTimeoutRef.current = setTimeout(() => {
-      handleIframeError();
+      handleIframeError('timeout');
     }, 20000);
   };
 
-  const handleIframeError = () => {
-    setShowError(true);
+  const handleIframeError = (source: 'timeout' | 'onerror' = 'onerror') => {
+    // Soft auto-switch mirrors like movies page
+    try {
+      const settings = getStreamingSettings();
+      if (settings.autoSwitch) {
+        // Do not hide player; just rotate source
+        const nextId = getNextDomainId(settings.selectedDomain);
+        const nextSettings = { ...settings, selectedDomain: nextId };
+        setStreamingSettings(nextSettings);
+        const url = getStreamingUrl('tv', slug, selectedSeason, selectedEpisode);
+        setEmbedUrl(url);
+        setShowError(false);
+        // shorten subsequent timeout
+        if (loadTimeoutRef.current) clearTimeout(loadTimeoutRef.current);
+        loadTimeoutRef.current = setTimeout(() => {
+          handleIframeError('timeout');
+        }, 8000);
+        if (source === 'timeout' || source === 'onerror') {
+          setTimeoutWarning(true);
+        }
+        return;
+      }
+    } catch {}
+    // Escalate to hard error after 2 failed attempts
+    setFailAttempts((n: number) => {
+      const next = n + 1;
+      if (next >= 2) {
+        setShowError(true);
+      } else {
+        setTimeoutWarning(true);
+      }
+      return next;
+    });
   };
 
   const handleRetry = () => {
     setShowError(false);
+    setTimeoutWarning(false);
     setShowPlayer(false);
     setTimeout(() => {
       const url = getStreamingUrl('tv', slug, selectedSeason, selectedEpisode);
@@ -100,9 +148,16 @@ export default function ShowDetail() {
   };
 
   const handleDomainSwitch = () => {
+    try {
+      const settings = getStreamingSettings();
+      const nextId = getNextDomainId(settings.selectedDomain);
+      const nextSettings = { ...settings, selectedDomain: nextId };
+      setStreamingSettings(nextSettings);
+    } catch {}
     const url = getStreamingUrl('tv', slug, selectedSeason, selectedEpisode);
     setEmbedUrl(url);
     setShowError(false);
+    setTimeoutWarning(false);
   };
 
   if (loading) {
@@ -192,12 +247,34 @@ export default function ShowDetail() {
                     className="object-cover w-full h-full"
                   />
                 </div>
+              {showPlayer && !showError && timeoutWarning && (
+                <div className="mt-3 p-3 rounded-md bg-yellow-500/10 border border-yellow-500/30 text-yellow-300 text-sm flex items-center justify-between">
+                  <span>Player seems blocked or slow. You can switch source or open in a new tab.</span>
+                  <div className="flex gap-2">
+                    <button onClick={handleDomainSwitch} className="px-3 py-1 rounded bg-gray-800 hover:bg-gray-700 text-white text-xs">Switch source</button>
+                    <a href={embedUrl} target="_blank" rel="noopener noreferrer" className="px-3 py-1 rounded bg-purple-600 hover:bg-purple-700 text-white text-xs">Open in new tab</a>
+                  </div>
+                </div>
+              )}
 
                 {/* Show Info */}
                 <div className="max-w-xl">
                   <h1 className="text-3xl md:text-4xl font-bold mb-4">
                     {show?.name}
                   </h1>
+                  <div className="mb-4">
+                    <button
+                      onClick={() => {
+                        const idNum = Number(slug);
+                        const type: 'tv' = 'tv';
+                        if (fav) { removeFavorite(idNum, type); setFav(false); }
+                        else { addFavorite(idNum, type); setFav(true); }
+                      }}
+                      className={`px-3 py-1.5 rounded-full text-sm border transition-all backdrop-blur-md ${fav ? 'bg-emerald-500/20 text-emerald-200 border-emerald-400/30' : 'bg-slate-900/50 text-gray-300 border-slate-700/40 hover:border-emerald-300/30'}`}
+                    >
+                      {fav ? '★ Fav' : '☆ Fav'}
+                    </button>
+                  </div>
                   <div className="flex flex-wrap items-center gap-4 mb-4">
                     <div className="flex items-center space-x-1">
                       <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
@@ -327,11 +404,19 @@ export default function ShowDetail() {
                     className="w-full h-full"
                     frameBorder="0"
                     allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-                    sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+                    {...(!(/vidsrc\./i.test(embedUrl)) ? { sandbox: "allow-same-origin allow-scripts allow-forms allow-popups" } : {})}
                     referrerPolicy="origin-when-cross-origin"
                     allowFullScreen
                     title={`${show?.name} - Season ${selectedSeason} Episode ${selectedEpisode}`}
-                    onError={handleIframeError}
+                    onError={() => handleIframeError('onerror')}
+                    onLoad={() => {
+                      setShowError(false);
+                      setTimeoutWarning(false);
+                      if (loadTimeoutRef.current) {
+                        clearTimeout(loadTimeoutRef.current);
+                        loadTimeoutRef.current = null;
+                      }
+                    }}
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
