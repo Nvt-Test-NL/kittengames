@@ -15,7 +15,7 @@ import {
   getSimilarMovies,
   getSimilarTV,
 } from "../../utils/tmdb";
-import { getHistory, type WatchProgress } from "../../utils/history";
+import { getHistory, onHistoryChanged, type WatchProgress } from "../../utils/history";
 import { getFavorites, onFavoritesChanged, type FavItem } from "../../utils/favorites";
 import {
   Tabs,
@@ -74,6 +74,34 @@ export default function Movies() {
     };
 
     fetchData();
+  }, []);
+
+  // Live update Continue Watching and Already Watched on history changes
+  useEffect(() => {
+    const recomputeFromHistory = async () => {
+      const history: WatchProgress[] = getHistory();
+      const cw = history.filter(h => !h.finished).sort((a,b)=>b.updatedAt - a.updatedAt).slice(0, 10);
+      const cwDetails: (Movie | TVShow)[] = [];
+      for (const h of cw) {
+        try {
+          const item = h.type === 'movie' ? await getMovieDetails(h.tmdbId) : await getTVDetails(h.tmdbId);
+          cwDetails.push(item);
+        } catch {}
+      }
+      setContinueWatching(cwDetails);
+
+      const watched = history.filter(h => h.finished).sort((a,b)=>b.updatedAt - a.updatedAt).slice(0, 12);
+      const watchedDetails: (Movie | TVShow)[] = [];
+      for (const h of watched) {
+        try {
+          const item = h.type === 'movie' ? await getMovieDetails(h.tmdbId) : await getTVDetails(h.tmdbId);
+          watchedDetails.push(item);
+        } catch {}
+      }
+      setAlreadyWatched(watchedDetails);
+    };
+    const off = onHistoryChanged(recomputeFromHistory);
+    return () => { off && off(); };
   }, []);
 
   // Refresh favorites live when they change
