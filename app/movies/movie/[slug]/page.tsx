@@ -9,6 +9,8 @@ import { Movie } from "../../../../types/tmdb";
 import { getPosterUrl, getBackdropUrl } from "../../../../utils/tmdb";
 import { getStreamingUrl, getStreamingSettings, getNextDomainId, setStreamingSettings } from "../../../../components/StreamingSettingsPanel";
 import { Loader2, Star, Calendar, Clock, ChevronLeft, Play } from "lucide-react";
+import { addFavorite, removeFavorite, isFavorite } from "../../../../utils/favorites";
+import { upsertProgress } from "../../../../utils/history";
 import axios from "axios";
 
 interface MovieDetails extends Movie {
@@ -34,6 +36,7 @@ export default function MovieDetail() {
   const [failAttempts, setFailAttempts] = useState(0);
   const loadTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const backGuardTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [fav, setFav] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchMovieDetails = async () => {
@@ -51,6 +54,15 @@ export default function MovieDetail() {
     if (slug) {
       fetchMovieDetails();
     }
+  }, [slug]);
+
+  useEffect(() => {
+    try {
+      if (!slug) return;
+      // slug is numeric id
+      const idNum = Number(slug);
+      if (!Number.isNaN(idNum)) setFav(isFavorite(idNum, 'movie'));
+    } catch {}
   }, [slug]);
 
   useEffect(() => {
@@ -105,6 +117,8 @@ export default function MovieDetail() {
     setTimeoutWarning(false);
     setFailAttempts(0);
     setShowPlayer(true);
+    // Seed Continue Watching as soon as user starts playback
+    try { upsertProgress({ tmdbId: Number(slug), type: 'movie', lastPositionSec: 5 }); } catch {}
     installBackGuard(6000);
     // Start timeout in case the iframe never fires onLoad due to X-Frame-Options/CSP
     if (loadTimeoutRef.current) clearTimeout(loadTimeoutRef.current);
@@ -277,6 +291,19 @@ export default function MovieDetail() {
                   <h1 className="text-3xl md:text-4xl font-bold mb-4">
                     {movie.title}
                   </h1>
+                  <div className="mb-4">
+                    <button
+                      onClick={() => {
+                        const idNum = Number(slug);
+                        const type: 'movie' = 'movie';
+                        if (fav) { removeFavorite(idNum, type); setFav(false); }
+                        else { addFavorite(idNum, type); setFav(true); }
+                      }}
+                      className={`px-3 py-1.5 rounded-full text-sm border transition-all backdrop-blur-md ${fav ? 'bg-emerald-500/20 text-emerald-200 border-emerald-400/30' : 'bg-slate-900/50 text-gray-300 border-slate-700/40 hover:border-emerald-300/30'}`}
+                    >
+                      {fav ? '★ Fav' : '☆ Fav'}
+                    </button>
+                  </div>
                   
                   {/* Metadata Row */}
                   <div className="flex flex-wrap items-center gap-4 mb-4">
