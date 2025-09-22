@@ -37,7 +37,8 @@ Regels:
         'X-Title': 'KittenMovies',
       },
       body: JSON.stringify({
-        model: process.env.OPENROUTER_MODEL || 'openrouter/auto',
+        // Dwing gratis model af; NIET overschrijven naar betaalde varianten
+        model: 'x-ai/grok-4-fast:free',
         messages: [
           { role: 'system', content: sys },
           { role: 'user', content: user },
